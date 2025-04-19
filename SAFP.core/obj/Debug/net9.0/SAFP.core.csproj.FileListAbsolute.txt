@@ -1,0 +1,12 @@
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\bin\Debug\net9.0\SAFP.core.deps.json
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\bin\Debug\net9.0\SAFP.core.dll
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\bin\Debug\net9.0\SAFP.core.pdb
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.csproj.AssemblyReference.cache
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.AssemblyInfoInputs.cache
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.AssemblyInfo.cs
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.csproj.CoreCompileInputs.cache
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.dll
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\refint\SAFP.core.dll
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.pdb
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\ref\SAFP.core.dll

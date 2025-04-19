@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAFP.core", "SAFP.core\SAFP.core.csproj", "{2CD5C349-116B-45DA-A6BB-9EAAE77EDB5E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SAFP.wpf", "SAFP.wpf\SAFP.wpf.csproj", "{EF08CDC4-0C35-47BA-AFE0-B4F853904882}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2CD5C349-116B-45DA-A6BB-9EAAE77EDB5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CD5C349-116B-45DA-A6BB-9EAAE77EDB5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CD5C349-116B-45DA-A6BB-9EAAE77EDB5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CD5C349-116B-45DA-A6BB-9EAAE77EDB5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF08CDC4-0C35-47BA-AFE0-B4F853904882}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF08CDC4-0C35-47BA-AFE0-B4F853904882}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF08CDC4-0C35-47BA-AFE0-B4F853904882}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF08CDC4-0C35-47BA-AFE0-B4F853904882}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
