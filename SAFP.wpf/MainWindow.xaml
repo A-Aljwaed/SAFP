@@ -23,13 +23,28 @@
                   HeadersVisibility="Column" FontSize="13"
                   HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
 
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Tag" Value="{Binding}" /> <Style.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
             <DataGrid.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Copy Username" Command="{Binding CopyUsernameCommand}" CommandParameter="{Binding SelectedItem, ElementName=PasswordDataGrid}"/>
-                    <MenuItem Header="Copy Password" Command="{Binding CopyPasswordCommand}" CommandParameter="{Binding SelectedItem, ElementName=PasswordDataGrid}"/>
+                 <ContextMenu>
+                    <MenuItem Header="Copy Username" Command="{Binding CopyUsernameCommand}"
+                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    <MenuItem Header="Copy Password" Command="{Binding CopyPasswordCommand}"
+                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                     <Separator/>
-                    <MenuItem Header="View / Edit" Command="{Binding EditEntryCommand}" CommandParameter="{Binding SelectedItem, ElementName=PasswordDataGrid}"/>
-                    <MenuItem Header="Delete Entry" Command="{Binding DeleteEntryCommand}" CommandParameter="{Binding SelectedItem, ElementName=PasswordDataGrid}"/>
+                    <MenuItem Header="View / Edit" Command="{Binding EditEntryCommand}"
+                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    <MenuItem Header="Delete Entry" Command="{Binding DeleteEntryCommand}"
+                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
 
@@ -39,18 +54,7 @@
                 <DataGridTextColumn Header="Username/Login" Binding="{Binding Username}" Width="3*" SortMemberPath="Username"/>
                 </DataGrid.Columns>
 
-            <DataGrid.Resources>
-                <Style TargetType="DataGridRow">
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.Resources>
-
-        </DataGrid>
+            </DataGrid>
 
         <Border Grid.Row="1" BorderBrush="LightGray" BorderThickness="0,1,0,0" Padding="10,5">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

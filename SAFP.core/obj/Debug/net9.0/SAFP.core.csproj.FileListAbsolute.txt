@@ -10,3 +10,4 @@ C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.dll
 C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\refint\SAFP.core.dll
 C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.pdb
 C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\ref\SAFP.core.dll
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.core\obj\Debug\net9.0\SAFP.core.sourcelink.json

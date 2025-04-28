@@ -7,7 +7,53 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="947d466e-eaaa-4454-a930-e57e183e88ac" name="Changes" comment="" />
+    <list default="true" id="947d466e-eaaa-4454-a930-e57e183e88ac" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SAFP/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SAFP/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SAFP/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SAFP/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/Class1.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/PasswordManagerLogic.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/PasswordManagerLogic.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/bin/Debug/net9.0/SAFP.core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/bin/Debug/net9.0/SAFP.core.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/bin/Debug/net9.0/SAFP.core.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/bin/Debug/net9.0/SAFP.core.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.csproj.AssemblyReference.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/SAFP.core.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/ref/SAFP.core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/ref/SAFP.core.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/refint/SAFP.core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/Debug/net9.0/refint/SAFP.core.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/rider.project.model.nuget.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.core/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.core/obj/rider.project.restore.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/App.xaml" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/App.xaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/App.xaml.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/App.xaml.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/LoginWindow.xaml" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/LoginWindow.xaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/LoginWindow.xaml.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/LoginWindow.xaml.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/MainWindow.xaml" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/MainWindow.xaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/MainWindow.xaml.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/MainWindow.xaml.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.core.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.core.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.core.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.core.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.wpf.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.wpf.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.wpf.exe" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.wpf.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.wpf.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/bin/Debug/net9.0-windows/SAFP.wpf.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/App.g.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/App.g.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/LoginWindow.baml" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/LoginWindow.baml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/LoginWindow.g.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/LoginWindow.g.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/MainWindow.baml" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/MainWindow.baml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/MainWindow.g.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/MainWindow.g.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.csproj.AssemblyReference.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.g.resources" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.g.resources" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf_MarkupCompile.lref" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/SAFP.wpf_MarkupCompile.lref" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/apphost.exe" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/apphost.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/ref/SAFP.wpf.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/ref/SAFP.wpf.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/refint/SAFP.wpf.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/Debug/net9.0-windows/refint/SAFP.wpf.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/rider.project.model.nuget.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAFP.wpf/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/SAFP.wpf/obj/rider.project.restore.info" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -16,6 +62,21 @@
   <component name="DpaMonitoringSettings">
     <option name="firstShow" value="false" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;A-Aljwaed&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/A-Aljwaed/SAFP.git&quot;,
+    &quot;accountId&quot;: &quot;22e38aad-68a7-4c5b-b98a-a09dc8dc39bd&quot;
+  }
+}</component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
@@ -28,18 +89,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    ".NET Project.SAFP.wpf.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;.NET Project.SAFP.wpf.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected=".NET Project.SAFP.wpf">
     <configuration name="SAFP.wpf" type="AspireHostConfiguration" factoryName="Aspire Host" activateToolWindowBeforeRun="false">
       <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/SAFP.wpf/SAFP.wpf.csproj" />
@@ -85,6 +148,9 @@
       <updated>1745003007089</updated>
       <workItem from="1745003008206" duration="4839000" />
       <workItem from="1745094462031" duration="967000" />
+      <workItem from="1745181520880" duration="837000" />
+      <workItem from="1745700481323" duration="1001000" />
+      <workItem from="1745859128309" duration="1291000" />
     </task>
     <servers />
   </component>

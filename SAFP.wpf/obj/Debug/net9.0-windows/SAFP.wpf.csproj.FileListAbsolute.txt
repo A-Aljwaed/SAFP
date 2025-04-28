@@ -29,3 +29,5 @@ C:\Users\ahmad\RiderProjects\SAFP\SAFP.wpf\obj\Debug\net9.0-windows\refint\SAFP.
 C:\Users\ahmad\RiderProjects\SAFP\SAFP.wpf\obj\Debug\net9.0-windows\SAFP.wpf.pdb
 C:\Users\ahmad\RiderProjects\SAFP\SAFP.wpf\obj\Debug\net9.0-windows\SAFP.wpf.genruntimeconfig.cache
 C:\Users\ahmad\RiderProjects\SAFP\SAFP.wpf\obj\Debug\net9.0-windows\ref\SAFP.wpf.dll
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.wpf\obj\Debug\net9.0-windows\SAFP.wpf.sourcelink.json
+C:\Users\ahmad\RiderProjects\SAFP\SAFP.wpf\obj\Debug\net9.0-windows\App.baml

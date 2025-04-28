@@ -5,22 +5,17 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SAFP.Wpf"
         mc:Ignorable="d"
-        Title="SAFP Login" Height="250" Width="400"
-        WindowStartupLocation="CenterScreen"
+        Title="{Binding WindowTitle}" Height="280" Width="400" WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display">
     <Grid Margin="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Enter Master Password"
+        <TextBlock Grid.Row="0" Text="{Binding PromptText}"
                    FontSize="16" FontWeight="SemiBold"
                    HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
@@ -30,13 +25,20 @@
                      ToolTip="Enter your master password"
                      PasswordChanged="PasswordBox_PasswordChanged"
                      KeyDown="PasswordBox_KeyDown"/>
-                     <Button Grid.Row="2" Content="Unlock Vault"
-                Command="{Binding UnlockCommand}"
-                MinWidth="120" Padding="10,5" FontSize="14" FontWeight="SemiBold"
-                HorizontalAlignment="Center" Margin="0,10,0,5" IsDefault="True"/>
+                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,5">
+             <Button Content="{Binding ActionButtonText}"
+                    Command="{Binding SubmitCommand}"
+                    MinWidth="120" Padding="10,5" FontSize="14" FontWeight="SemiBold"
+                    Margin="5" IsDefault="True"/>
+             <Button Content="Cancel Setup"
+                     Command="{Binding CancelSetupCommand}"
+                     Visibility="{Binding CancelButtonVisibility}"
+                     MinWidth="100" Padding="10,5" FontSize="14"
+                     Margin="5" IsCancel="True"/>
+        </StackPanel>
+
 
         <TextBlock Grid.Row="3" Text="{Binding StatusMessage}" Foreground="Red"
-                   HorizontalAlignment="Center" TextWrapping="Wrap" Margin="0,5,0,0"/>
-
-    </Grid>
+                   HorizontalAlignment="Center" TextWrapping="Wrap" Margin="0,5,0,0" MinHeight="30"/>
+                   </Grid>
 </Window>

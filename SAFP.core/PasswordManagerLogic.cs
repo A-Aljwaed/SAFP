@@ -36,7 +36,7 @@ namespace SAFP.Core
     {
         private readonly string _dataFile; // Private field to store the path
 
-        // Constants matching Python version
+        // Constants to define the encryption strength
         private const int KdfIterations = 390000; // PBKDF2 iterations
         private const int KeyLengthBytes = 32;    // 256 bits for AES key
         private const int NonceLengthBytes = 12;   // 96 bits for AES-GCM nonce

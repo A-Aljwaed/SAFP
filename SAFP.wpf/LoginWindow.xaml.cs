@@ -44,7 +44,6 @@ namespace SAFP.Wpf
             Loaded += (sender, e) => PasswordBox.Focus();
 
             // Title is now bound in XAML via ViewModel property
-            // if (isInitialSetup) { Title = "SAFP - Create Master Password"; }
         }
 
 
@@ -58,7 +57,7 @@ namespace SAFP.Wpf
             }
         }
 
-        // Trigger UnlockCommand on Enter key press in PasswordBox
+        // Trigger SubmitCommand on Enter key press in PasswordBox
         private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -150,7 +149,7 @@ namespace SAFP.Wpf
             }
 
             IsBusy = true;
-            StatusMessage = _isInitialSetup ? "Setting up..." : "Unlocking...";
+            StatusMessage = _isInitialSetup ? "Checking & Creating..." : "Unlocking..."; // Updated setup message
 
             // Convert SecureString to plain string for logic (handle with care)
             string password = SecureStringToString(SecurePassword);
@@ -162,6 +161,7 @@ namespace SAFP.Wpf
                 // 1. Check strength first
                 try
                 {
+                    // Ensure Zxcvbn library is referenced and working
                     var strength = _logic.CheckPasswordStrength(password);
                     if (strength.Score < 3)
                     {
@@ -177,15 +177,17 @@ namespace SAFP.Wpf
                 }
                 catch (Exception ex)
                 {
-                    StatusMessage = $"Strength check failed: {ex.Message}. Please try a different password.";
+                    // Handle case where Zxcvbn might fail (e.g., library not found)
+                    StatusMessage = $"Strength check failed: {ex.Message}. Cannot proceed.";
                     Console.WriteLine($"Zxcvbn error: {ex}"); // Log full error
                     password = string.Empty;
                     IsBusy = false;
+                    // Optionally allow proceeding without strength check if desired, but risky
                     return;
                 }
 
                 // 2. Ask for confirmation using a simple input dialog
-                // NOTE: This uses a basic input dialog. A custom dialog with a PasswordBox would be better.
+                // NOTE: Ensure InputDialog class/XAML is correctly implemented in your project.
                 var confirmDialog = new InputDialog("Confirm Master Password", "Please re-enter your master password to confirm:", isPassword: true);
                 if (confirmDialog.ShowDialog() == true)
                 {
@@ -217,6 +219,7 @@ namespace SAFP.Wpf
                 if (_isInitialSetup)
                 {
                     // Save initial empty vault (passwords matched)
+                    StatusMessage = "Creating vault file..."; // Give feedback before save
                     await _logic.SaveDataAsync(new Dictionary<string, PasswordEntry>(), password);
                     StatusMessage = "Vault created successfully!";
                     LoginSuccess?.Invoke(this, password); // Signal success
@@ -224,6 +227,7 @@ namespace SAFP.Wpf
                 else
                 {
                     // Normal Unlock Logic: Try loading data to verify password
+                    StatusMessage = "Decrypting vault..."; // Give feedback before load
                     var data = await _logic.LoadDataAsync<Dictionary<string, PasswordEntry>>(password);
                     // If LoadDataAsync doesn't throw, password is correct
                     StatusMessage = "Unlock successful!";
@@ -242,6 +246,7 @@ namespace SAFP.Wpf
             {
                 StatusMessage = $"An unexpected error occurred: {ex.Message}";
                 // Log the full exception ex
+                Console.WriteLine($"UnlockOrSetup Error: {ex}");
             }
             finally
             {
@@ -276,15 +281,20 @@ namespace SAFP.Wpf
         }
     }
 
-    // --- Simple Input Dialog Helper Class (Add this within the same file or separate) ---
+    // --- Simple Input Dialog Helper Class (Ensure this is correctly implemented) ---
     public partial class InputDialog : Window
     {
         public string ResponseText { get; private set; } = "";
         private bool _isPassword;
 
+        // Basic controls - ensure these names match your XAML if you created one
+        internal TextBlock QuestionLabel = new TextBlock();
+        internal TextBox ResponseTextBox = new TextBox();
+        internal PasswordBox ResponsePasswordBox = new PasswordBox();
+
         public InputDialog(string title, string question, bool isPassword = false)
         {
-            InitializeComponent(); // Needs XAML definition below
+            InitializeComponent(); // This MUST exist if you have XAML
             Title = title;
             QuestionLabel.Text = question;
             _isPassword = isPassword;
@@ -293,74 +303,63 @@ namespace SAFP.Wpf
             {
                 ResponsePasswordBox.Visibility = Visibility.Visible;
                 ResponseTextBox.Visibility = Visibility.Collapsed;
-                ResponsePasswordBox.Focus();
+                // Delay focus slightly to ensure window is ready
+                Dispatcher.BeginInvoke(new Action(() => ResponsePasswordBox.Focus()), System.Windows.Threading.DispatcherPriority.Loaded);
             }
             else
             {
                 ResponsePasswordBox.Visibility = Visibility.Collapsed;
                 ResponseTextBox.Visibility = Visibility.Visible;
-                ResponseTextBox.Focus();
+                Dispatcher.BeginInvoke(new Action(() => ResponseTextBox.Focus()), System.Windows.Threading.DispatcherPriority.Loaded);
             }
         }
 
-        // Minimal XAML needed for InputDialog (place in InputDialog.xaml)
-        /*
-        <Window x:Class="SAFP.Wpf.InputDialog" ... Height="180" Width="350" ... >
-            <Grid Margin="15">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock x:Name="QuestionLabel" Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                <TextBox x:Name="ResponseTextBox" Grid.Row="1" MinWidth="250" KeyDown="Response_KeyDown"/>
-                <PasswordBox x:Name="ResponsePasswordBox" Grid.Row="1" MinWidth="250" KeyDown="Response_KeyDown"/>
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-                    <Button Content="OK" IsDefault="True" MinWidth="70" Margin="0,0,10,0" Click="OkButton_Click"/>
-                    <Button Content="Cancel" IsCancel="True" MinWidth="70"/>
-                </StackPanel>
-            </Grid>
-        </Window>
-        */
-
-        // Code-behind for InputDialog.xaml.cs
-        private void InitializeComponent() // Placeholder if XAML isn't fully defined elsewhere
+        // Minimal programmatic setup if InitializeComponent() is missing (i.e., no XAML)
+        // Remove this method if you have InputDialog.xaml
+        private void InitializeComponent()
         {
-             // This would normally be generated from XAML
-            // Define QuestionLabel, ResponseTextBox, ResponsePasswordBox etc. programmatically if needed
-             // Or ensure you have a corresponding InputDialog.xaml file
-             // For now, assume controls exist for logic below.
-             // Example (needs real UI):
-             this.QuestionLabel = new TextBlock();
-             this.ResponseTextBox = new TextBox();
-             this.ResponsePasswordBox = new PasswordBox();
-             // ... add buttons etc. ...
-             // Set basic window properties
-             this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-             this.ResizeMode = ResizeMode.NoResize;
-             this.SizeToContent = SizeToContent.WidthAndHeight;
-             this.MinWidth = 300;
-             this.MinHeight = 150;
+            // Check if content is already set (by XAML)
+            if (this.Content != null) return;
 
-             // Simplified layout (replace with proper XAML Grid/StackPanel)
-             var stack = new StackPanel { Margin = new Thickness(15) };
-             stack.Children.Add(QuestionLabel);
-             stack.Children.Add(ResponseTextBox);
-             stack.Children.Add(ResponsePasswordBox);
-             var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0,15,0,0) };
-             var okButton = new Button { Content="OK", IsDefault=true, MinWidth=70, Margin=new Thickness(0,0,10,0) };
-             okButton.Click += OkButton_Click;
-             var cancelButton = new Button { Content="Cancel", IsCancel=true, MinWidth=70 };
-             buttonPanel.Children.Add(okButton);
-             buttonPanel.Children.Add(cancelButton);
-             stack.Children.Add(buttonPanel);
-             this.Content = stack;
+            // Programmatic setup as fallback
+            this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            this.ResizeMode = ResizeMode.NoResize;
+            this.SizeToContent = SizeToContent.WidthAndHeight;
+            this.MinWidth = 350; this.MaxWidth = 500;
+            this.MinHeight = 150;
 
+            var grid = new Grid { Margin = new Thickness(15) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            QuestionLabel.TextWrapping = TextWrapping.Wrap;
+            QuestionLabel.Margin = new Thickness(0, 0, 0, 10);
+            Grid.SetRow(QuestionLabel, 0);
+
+            ResponseTextBox.MinWidth = 250;
+            ResponseTextBox.KeyDown += Response_KeyDown;
+            Grid.SetRow(ResponseTextBox, 1);
+
+            ResponsePasswordBox.MinWidth = 250;
+            ResponsePasswordBox.KeyDown += Response_KeyDown;
+            Grid.SetRow(ResponsePasswordBox, 1);
+
+            var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 15, 0, 0) };
+            var okButton = new Button { Content = "OK", IsDefault = true, MinWidth = 70, Margin = new Thickness(0, 0, 10, 0) };
+            okButton.Click += OkButton_Click;
+            var cancelButton = new Button { Content = "Cancel", IsCancel = true, MinWidth = 70 };
+            buttonPanel.Children.Add(okButton);
+            buttonPanel.Children.Add(cancelButton);
+            Grid.SetRow(buttonPanel, 2);
+
+            grid.Children.Add(QuestionLabel);
+            grid.Children.Add(ResponseTextBox);
+            grid.Children.Add(ResponsePasswordBox);
+            grid.Children.Add(buttonPanel);
+
+            this.Content = grid;
         }
-        // Need to declare the controls used in code-behind if not in XAML
-        internal TextBlock QuestionLabel = null!;
-        internal TextBox ResponseTextBox = null!;
-        internal PasswordBox ResponsePasswordBox = null!;
 
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -376,7 +375,8 @@ namespace SAFP.Wpf
         {
              if (e.Key == Key.Enter)
              {
-                 OkButton_Click(sender, e);
+                 // Simulate OK button click
+                 OkButton_Click(sender, new RoutedEventArgs());
              }
         }
     }
