@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SAFP.core")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a61547022865c885d500d2aa4638bbb3f7eb408e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+95426ab05a0d9959726dc5451b5747a0df3cc56f")]
 [assembly: System.Reflection.AssemblyProductAttribute("SAFP.core")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SAFP.core")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

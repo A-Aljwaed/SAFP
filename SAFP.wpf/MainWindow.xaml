@@ -10,7 +10,8 @@
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display"
-        Closing="Window_Closing"> <Grid Margin="10">
+        Closing="Window_Closing">
+    <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>       <RowDefinition Height="Auto"/>    <RowDefinition Height="Auto"/>    <RowDefinition Height="Auto"/>    </Grid.RowDefinitions>
 
@@ -25,7 +26,7 @@
 
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
-                    <Setter Property="Tag" Value="{Binding}" /> <Style.Triggers>
+                    <Style.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
@@ -36,15 +37,19 @@
 
             <DataGrid.ContextMenu>
                  <ContextMenu>
-                    <MenuItem Header="Copy Username" Command="{Binding CopyUsernameCommand}"
-                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                    <MenuItem Header="Copy Password" Command="{Binding CopyPasswordCommand}"
-                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    <MenuItem Header="Copy Username"
+                              Command="{Binding CopyUsernameCommand}"
+                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    <MenuItem Header="Copy Password"
+                              Command="{Binding CopyPasswordCommand}"
+                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                     <Separator/>
-                    <MenuItem Header="View / Edit" Command="{Binding EditEntryCommand}"
-                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                    <MenuItem Header="Delete Entry" Command="{Binding DeleteEntryCommand}"
-                              CommandParameter="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    <MenuItem Header="View / Edit"
+                              Command="{Binding EditEntryCommand}"
+                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                    <MenuItem Header="Delete Entry"
+                              Command="{Binding DeleteEntryCommand}"
+                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
 
@@ -52,9 +57,9 @@
                 <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="1.5*" SortMemberPath="Category"/>
                 <DataGridTextColumn Header="Service/Website" Binding="{Binding Service}" Width="3*" SortMemberPath="Service"/>
                 <DataGridTextColumn Header="Username/Login" Binding="{Binding Username}" Width="3*" SortMemberPath="Username"/>
-                </DataGrid.Columns>
+            </DataGrid.Columns>
 
-            </DataGrid>
+        </DataGrid>
 
         <Border Grid.Row="1" BorderBrush="LightGray" BorderThickness="0,1,0,0" Padding="10,5">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
