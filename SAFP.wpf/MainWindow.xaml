@@ -1,4 +1,4 @@
-﻿<Window x:Class="SAFP.Wpf.MainWindow"
+<Window x:Class="SAFP.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -39,17 +39,17 @@
                  <ContextMenu>
                     <MenuItem Header="Copy Username"
                               Command="{Binding CopyUsernameCommand}"
-                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                              CommandParameter="{Binding SelectedEntry}"/>
                     <MenuItem Header="Copy Password"
                               Command="{Binding CopyPasswordCommand}"
-                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                              CommandParameter="{Binding SelectedEntry}"/>
                     <Separator/>
                     <MenuItem Header="View / Edit"
                               Command="{Binding EditEntryCommand}"
-                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                              CommandParameter="{Binding SelectedEntry}"/>
                     <MenuItem Header="Delete Entry"
                               Command="{Binding DeleteEntryCommand}"
-                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                              CommandParameter="{Binding SelectedEntry}"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
 
