@@ -6,3 +6,15 @@ channel = "stable-24_05"
 
 [deployment]
 run = ["sh", "-c", "dotnet run"]
+
+[workflows]
+runButton = "Run SAFP"
+
+[[workflows.workflow]]
+name = "Run SAFP"
+author = 32258129
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd SAFP.wpf && dotnet run"
