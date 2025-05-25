@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SAFP.Wpf"
         mc:Ignorable="d"
-        Title="{Binding WindowTitle}" Height="280" Width="400" WindowStartupLocation="CenterScreen"
+        Title="SAFP - Secure Login" Height="350" Width="450" MinHeight="300" MinWidth="400"
+        WindowStartupLocation="CenterScreen"
+        Background="#F8F9FA"
         ResizeMode="NoResize"
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display">
     <Grid Margin="20">

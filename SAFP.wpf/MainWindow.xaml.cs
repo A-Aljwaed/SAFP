@@ -1,4 +1,4 @@
-﻿using SAFP.Core; // Access core logic and models
+using SAFP.Core; // Access core logic and models
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel; // For ObservableCollection
@@ -97,6 +97,9 @@ namespace SAFP.Wpf
         private string _statusMessage = "Vault unlocked.";
         private string _vaultStatus = "Unlocked";
         private bool _isBusy = false;
+        private DispatcherTimer _clipboardTimer;
+        private string _clipboardTimerMessage = "";
+        private int _remainingSeconds = 0;
 
         public event EventHandler? RequestLock;
 
@@ -140,6 +143,12 @@ namespace SAFP.Wpf
             LockVaultCommand = new RelayCommand(LockVault, CanExecuteSimpleCommand);
             BackupBrowserFilesCommand = new RelayCommand(async (_) => await BackupBrowserFilesAsync(), CanExecuteSimpleCommand);
             RestoreBrowserFilesCommand = new RelayCommand(async (_) => await RestoreBrowserFilesAsync(), CanExecuteSimpleCommand);
+            
+            // Initialize clipboard timer
+            _clipboardTimer = new DispatcherTimer();
+            _clipboardTimer.Interval = TimeSpan.FromSeconds(1);
+            _clipboardTimer.Tick += ClipboardTimer_Tick;
+            
             Debug.WriteLine("[MainViewModel] Commands initialized.");
             Debug.WriteLine("[MainViewModel] Constructor finished.");
         }
@@ -188,6 +197,12 @@ namespace SAFP.Wpf
                     CommandManager.InvalidateRequerySuggested();
                 }
             }
+        }
+
+        public string ClipboardTimerMessage
+        {
+            get => _clipboardTimerMessage;
+            set => SetProperty(ref _clipboardTimerMessage, value);
         }
 
 
@@ -328,21 +343,57 @@ namespace SAFP.Wpf
                  Debug.WriteLine($"[MainViewModel] Calling Clipboard.SetText for password...");
                  Clipboard.SetText(passwordToCopy);
                  Debug.WriteLine("[MainViewModel] Clipboard.SetText call finished for password.");
-                 // Optional: Verification
-                 // string? clipboardText = null;
-                 // try { clipboardText = Clipboard.GetText(); } catch {}
-                 // if (clipboardText == passwordToCopy) { StatusMessage = $"Password for '{entryNonNull.Service}' copied."; }
-                 // else { StatusMessage = $"Password copy verification failed for '{entryNonNull.Service}'."; }
-                 StatusMessage = $"Password for '{entryNonNull.Service}' copied."; // Assume success if no exception
+                 StatusMessage = $"Password for '{entryNonNull.Service}' copied.";
+                 StartClipboardTimer();
              }
              catch (Exception ex)
              { StatusMessage = $"Error copying password: {ex.Message}"; Debug.WriteLine($"[MainViewModel] Exception during CopyPassword: {ex}"); MessageBox.Show($"Could not copy password to clipboard: {ex.Message}", "Clipboard Error", MessageBoxButton.OK, MessageBoxImage.Warning); }
+        }
+
+        private void StartClipboardTimer()
+        {
+            _remainingSeconds = 90;
+            ClipboardTimerMessage = $"🔒 Password will be cleared from clipboard in {_remainingSeconds}s";
+            _clipboardTimer.Start();
+            Debug.WriteLine("[MainViewModel] Clipboard timer started - 90 seconds until auto-clear.");
+        }
+
+        private void ClipboardTimer_Tick(object? sender, EventArgs e)
+        {
+            _remainingSeconds--;
+            
+            if (_remainingSeconds <= 0)
+            {
+                _clipboardTimer.Stop();
+                try
+                {
+                    Clipboard.Clear();
+                    ClipboardTimerMessage = "";
+                    StatusMessage = "Clipboard cleared for security.";
+                    Debug.WriteLine("[MainViewModel] Clipboard automatically cleared after 90 seconds.");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[MainViewModel] Error clearing clipboard: {ex.Message}");
+                }
+            }
+            else
+            {
+                ClipboardTimerMessage = $"🔒 Password will be cleared from clipboard in {_remainingSeconds}s";
+            }
+        }
+
+        private void StopClipboardTimer()
+        {
+            _clipboardTimer.Stop();
+            ClipboardTimerMessage = "";
         }
 
         private void LockVault(object? parameter = null)
         {
             Debug.WriteLine("[MainViewModel] LockVault command executed."); if (IsBusy) return;
             StatusMessage = "Locking vault..."; VaultStatus = "Locked"; _masterPassword = string.Empty; _passwordData.Clear(); PasswordEntries.Clear(); SelectedEntry = null;
+            StopClipboardTimer();
             try { Clipboard.Clear(); Debug.WriteLine("[MainViewModel] Clipboard cleared on lock."); } catch (Exception ex) { Debug.WriteLine($"[MainViewModel] Error clearing clipboard on lock: {ex.Message}"); }
             Debug.WriteLine("[MainViewModel] Firing RequestLock event."); RequestLock?.Invoke(this, EventArgs.Empty);
         }
@@ -362,7 +413,7 @@ namespace SAFP.Wpf
         public bool CanExitApplication()
         {
              Debug.WriteLine("[MainViewModel] CanExitApplication called."); var result = MessageBox.Show("Lock vault and exit SAFP?", "Confirm Exit", MessageBoxButton.YesNo, MessageBoxImage.Question);
-             if (result == MessageBoxResult.Yes) { Debug.WriteLine("[MainViewModel] User confirmed exit. Clearing sensitive data."); _masterPassword = string.Empty; _passwordData.Clear(); PasswordEntries.Clear(); try { Clipboard.Clear(); } catch { /* Ignore */ } return true; }
+             if (result == MessageBoxResult.Yes) { Debug.WriteLine("[MainViewModel] User confirmed exit. Clearing sensitive data."); StopClipboardTimer(); _masterPassword = string.Empty; _passwordData.Clear(); PasswordEntries.Clear(); try { Clipboard.Clear(); } catch { /* Ignore */ } return true; }
              Debug.WriteLine("[MainViewModel] User cancelled exit."); return false;
         }
 
