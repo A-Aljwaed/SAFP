@@ -53,9 +53,9 @@ namespace SAFP.Wpf
             }
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-             Debug.WriteLine("[MainWindow] Loaded event fired.");
+            Debug.WriteLine("[MainWindow] Loaded event fired.");
         }
 
 
@@ -143,12 +143,12 @@ namespace SAFP.Wpf
             LockVaultCommand = new RelayCommand(LockVault, CanExecuteSimpleCommand);
             BackupBrowserFilesCommand = new RelayCommand(async (_) => await BackupBrowserFilesAsync(), CanExecuteSimpleCommand);
             RestoreBrowserFilesCommand = new RelayCommand(async (_) => await RestoreBrowserFilesAsync(), CanExecuteSimpleCommand);
-            
+
             // Initialize clipboard timer
             _clipboardTimer = new DispatcherTimer();
             _clipboardTimer.Interval = TimeSpan.FromSeconds(1);
             _clipboardTimer.Tick += ClipboardTimer_Tick;
-            
+
             Debug.WriteLine("[MainViewModel] Commands initialized.");
             Debug.WriteLine("[MainViewModel] Constructor finished.");
         }
@@ -361,7 +361,7 @@ namespace SAFP.Wpf
         private void ClipboardTimer_Tick(object? sender, EventArgs e)
         {
             _remainingSeconds--;
-            
+
             if (_remainingSeconds <= 0)
             {
                 _clipboardTimer.Stop();

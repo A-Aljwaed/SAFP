@@ -212,6 +212,103 @@ namespace SAFP.Core
         }
         #endregion
 
+        // --- Secure File Management ---
+
+        /// <summary>
+        /// Securely deletes a file by overwriting it multiple times before deletion.
+        /// </summary>
+        private void SecureDeleteFile(string filePath)
+        {
+            if (!File.Exists(filePath)) return;
+
+            try
+            {
+                var fileInfo = new FileInfo(filePath);
+                long fileLength = fileInfo.Length;
+                
+                // Overwrite the file multiple times with random data
+                using (var fileStream = File.OpenWrite(filePath))
+                {
+                    var random = new Random();
+                    var buffer = new byte[4096];
+                    
+                    // Pass 1: Random data
+                    fileStream.Position = 0;
+                    for (long written = 0; written < fileLength; written += buffer.Length)
+                    {
+                        int bytesToWrite = (int)Math.Min(buffer.Length, fileLength - written);
+                        random.NextBytes(buffer);
+                        fileStream.Write(buffer, 0, bytesToWrite);
+                    }
+                    fileStream.Flush();
+                    
+                    // Pass 2: All zeros
+                    fileStream.Position = 0;
+                    Array.Clear(buffer, 0, buffer.Length);
+                    for (long written = 0; written < fileLength; written += buffer.Length)
+                    {
+                        int bytesToWrite = (int)Math.Min(buffer.Length, fileLength - written);
+                        fileStream.Write(buffer, 0, bytesToWrite);
+                    }
+                    fileStream.Flush();
+                    
+                    // Pass 3: All ones
+                    fileStream.Position = 0;
+                    Array.Fill(buffer, (byte)0xFF);
+                    for (long written = 0; written < fileLength; written += buffer.Length)
+                    {
+                        int bytesToWrite = (int)Math.Min(buffer.Length, fileLength - written);
+                        fileStream.Write(buffer, 0, bytesToWrite);
+                    }
+                    fileStream.Flush();
+                }
+                
+                // Finally delete the file
+                File.Delete(filePath);
+                Console.WriteLine($"Securely deleted: {filePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not securely delete {filePath}: {ex.Message}");
+                // Try normal deletion as fallback
+                try { File.Delete(filePath); } catch { }
+            }
+        }
+
+        /// <summary>
+        /// Backs up browser files and securely deletes originals for protection.
+        /// </summary>
+        public async Task<(bool Success, List<string> Messages)> BackupAndSecureDeleteAsync(string masterPassword)
+        {
+            var (backupSuccess, backupMessages) = await BackupBrowserFilesAsync(masterPassword);
+            
+            if (!backupSuccess)
+            {
+                backupMessages.Add("Backup failed - browser files NOT deleted for safety.");
+                return (false, backupMessages);
+            }
+
+            // Securely delete original files after successful backup
+            var filesToDelete = FindBrowserFiles();
+            int deletedCount = 0;
+            
+            foreach (var filePath in filesToDelete)
+            {
+                try
+                {
+                    SecureDeleteFile(filePath);
+                    deletedCount++;
+                }
+                catch (Exception ex)
+                {
+                    backupMessages.Add($"Warning: Could not delete {Path.GetFileName(filePath)}: {ex.Message}");
+                }
+            }
+            
+            backupMessages.Add($"Securely deleted {deletedCount} original browser files.");
+            return (true, backupMessages);
+        }
+
         // --- Backup and Restore Logic ---
 
         /// <summary>
@@ -408,6 +505,55 @@ namespace SAFP.Core
 
 
             return (overallSuccess, messages);
+        }
+
+        /// <summary>
+        /// Checks if any browser credential files exist on the system.
+        /// </summary>
+        public bool DoBrowserFilesExist()
+        {
+            var files = FindBrowserFiles();
+            return files.Any();
+        }
+
+        /// <summary>
+        /// Checks if a backup file exists.
+        /// </summary>
+        public bool DoesBackupExist()
+        {
+            return File.Exists(_backupFilePath);
+        }
+
+        /// <summary>
+        /// Securely deletes all browser credential files (for app shutdown).
+        /// </summary>
+        public async Task<(bool Success, List<string> Messages)> SecureDeleteAllBrowserFilesAsync()
+        {
+            var messages = new List<string>();
+            var filesToDelete = FindBrowserFiles();
+            
+            if (!filesToDelete.Any())
+            {
+                messages.Add("No browser files found to delete.");
+                return (true, messages);
+            }
+
+            int deletedCount = 0;
+            foreach (var filePath in filesToDelete)
+            {
+                try
+                {
+                    SecureDeleteFile(filePath);
+                    deletedCount++;
+                }
+                catch (Exception ex)
+                {
+                    messages.Add($"Warning: Could not delete {Path.GetFileName(filePath)}: {ex.Message}");
+                }
+            }
+            
+            messages.Add($"Securely deleted {deletedCount} browser files for security.");
+            return (deletedCount > 0, messages);
         }
     }
 }
