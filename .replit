@@ -17,4 +17,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd SAFP.wpf && dotnet run"
+args = "cd SAFP.wpf && dotnet run -p:EnableWindowsTargeting=true"
