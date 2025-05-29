@@ -1,4 +1,4 @@
-﻿using SAFP.Core; // For PasswordEntry, PasswordManagerLogic
+using SAFP.Core; // For PasswordEntry, PasswordManagerLogic, BrowserFileManager
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -23,6 +23,7 @@ namespace SAFP.Wpf
             "SAFP", "vault.safp");
 
         private PasswordManagerLogic? _logic;
+        private BrowserFileManager? _browserManager;
 
         private async void Application_Startup(object sender, StartupEventArgs e)
         {
@@ -44,14 +45,22 @@ namespace SAFP.Wpf
                 catch (Exception ex) { ShowFatalError($"Failed to create application data directory: {ex.Message}", true); return; }
             }
 
-            // 2. Initialize Logic
-            try { _logic = new PasswordManagerLogic(VaultFilePath); }
+            // 2. Initialize Logic and Browser Manager
+            try 
+            { 
+                _logic = new PasswordManagerLogic(VaultFilePath); 
+                _browserManager = new BrowserFileManager();
+            }
             catch (Exception ex) { ShowFatalError($"Failed to initialize core logic: {ex.Message}", true); return; }
 
             // 3. Check Vault Existence
             bool vaultExists = File.Exists(VaultFilePath);
             Debug.WriteLine($"[App] Vault file exists check: {vaultExists}");
             bool isInitialSetup = !vaultExists;
+
+            // 3.5. Handle automatic browser backup for first-time users
+            bool shouldAutoBackupBrowsers = isInitialSetup && _browserManager.DoBrowserFilesExist();
+            Debug.WriteLine($"[App] Should auto-backup browsers: {shouldAutoBackupBrowsers}");
 
             // 4. Show Login/Setup Window
             Dictionary<string, PasswordEntry>? initialData = null;
@@ -80,6 +89,53 @@ namespace SAFP.Wpf
                     initialData = await _logic.LoadDataAsync<Dictionary<string, PasswordEntry>>(MasterPassword);
                     if (initialData == null) { initialData = new Dictionary<string, PasswordEntry>(); Debug.WriteLine("[App] WARNING: LoadDataAsync returned null. Using empty data."); }
                     Debug.WriteLine($"[App] Vault data loaded. Entry count: {initialData.Count}");
+
+                    // Perform automatic browser backup and secure delete for first-time users
+                    if (shouldAutoBackupBrowsers)
+                    {
+                        Debug.WriteLine("[App] Performing automatic browser backup for first-time user...");
+                        var (backupSuccess, backupMessages) = await _browserManager.BackupAndSecureDeleteAsync(MasterPassword);
+                        if (backupSuccess)
+                        {
+                            Debug.WriteLine("[App] Automatic browser backup completed successfully.");
+                            MessageBox.Show("Welcome to SAFP!\n\n" +
+                                          "Your browser passwords have been automatically backed up and secured. " +
+                                          "The original files have been securely deleted to prevent unauthorized access.\n\n" +
+                                          "Browser passwords will be restored when SAFP is running and " +
+                                          "securely removed when you close the application.\n\n" +
+                                          string.Join("\n", backupMessages), 
+                                          "Browser Passwords Secured", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        else
+                        {
+                            Debug.WriteLine("[App] Automatic browser backup failed.");
+                            MessageBox.Show("Warning: Could not automatically backup browser passwords:\n\n" +
+                                          string.Join("\n", backupMessages), 
+                                          "Browser Backup Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                    }
+
+                    // Restore browser files when app starts (if needed)
+                    if (_browserManager.ShouldRestoreAtStartup())
+                    {
+                        Debug.WriteLine("[App] Restoring browser files from backup...");
+                        var (restoreSuccess, restoreMessages) = await _browserManager.RestoreBrowserFilesAsync(MasterPassword);
+                        if (restoreSuccess)
+                        {
+                            Debug.WriteLine("[App] Browser files restored successfully.");
+                        }
+                        else
+                        {
+                            Debug.WriteLine($"[App] Browser file restore failed: {string.Join("; ", restoreMessages)}");
+                            MessageBox.Show("Warning: Could not restore browser passwords:\n\n" +
+                                          string.Join("\n", restoreMessages), 
+                                          "Browser Restore Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                    }
+                    else if (_browserManager.DoesBackupExist())
+                    {
+                        Debug.WriteLine("[App] Browser backup exists and browser files are present - no restore needed.");
+                    }
                 }
                 catch (Exception ex) { ShowFatalError($"Failed to load vault data after login: {ex.Message}", true); return; }
             }
@@ -137,9 +193,25 @@ namespace SAFP.Wpf
         }
 
         // Override OnExit or handle MainWindow closing differently if needed with OnExplicitShutdown
-        protected override void OnExit(ExitEventArgs e)
+        protected override async void OnExit(ExitEventArgs e)
         {
             Debug.WriteLine($"[App] Application exiting with code: {e.ApplicationExitCode}");
+            
+            // Securely delete browser files when app closes
+            if (_browserManager != null)
+            {
+                try
+                {
+                    Debug.WriteLine("[App] Securely deleting browser files on exit...");
+                    var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
+                    Debug.WriteLine($"[App] Browser file deletion completed. Success: {deleteSuccess}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[App] Error during browser file cleanup: {ex.Message}");
+                }
+            }
+            
             base.OnExit(e);
         }
     }

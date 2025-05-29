@@ -47,9 +47,34 @@ namespace SAFP.Wpf
             }
             catch (Exception ex)
             {
-                 Debug.WriteLine($"[MainWindow] FATAL ERROR in Constructor: {ex}");
-                 MessageBox.Show($"Fatal error initializing main window: {ex.Message}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                 Application.Current?.Shutdown(1);
+                Debug.WriteLine($"[MainWindow] ERROR during construction: {ex.Message}");
+                MessageBox.Show($"Failed to initialize main window: {ex.Message}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                throw; // Re-throw to let App.xaml.cs handle it
+            }
+        }
+
+        private async void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            Debug.WriteLine("[MainWindow] MainWindow_Closing called.");
+
+            // Check if user wants to exit
+            if (!_viewModel.CanExitApplication())
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            // Perform browser cleanup
+            try
+            {
+                var browserManager = new BrowserFileManager();
+                Debug.WriteLine("[MainWindow] Securely deleting browser files on window close...");
+                var (deleteSuccess, deleteMessages) = await browserManager.SecureDeleteAllBrowserFilesAsync();
+                Debug.WriteLine($"[MainWindow] Browser file deletion completed. Success: {deleteSuccess}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] Error during browser file cleanup: {ex.Message}");
             }
         }
 
