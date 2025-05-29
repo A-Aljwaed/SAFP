@@ -555,5 +555,14 @@ namespace SAFP.Core
             messages.Add($"Securely deleted {deletedCount} browser files for security.");
             return (deletedCount > 0, messages);
         }
+
+        /// <summary>
+        /// Determines if browser files should be restored at startup.
+        /// This happens when we have a backup but no browser files currently exist.
+        /// </summary>
+        public bool ShouldRestoreAtStartup()
+        {
+            return DoesBackupExist() && !DoBrowserFilesExist();
+        }
     }
 }
