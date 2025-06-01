@@ -10,7 +10,8 @@ using System.Windows;
 using System.Windows.Input; // For ICommand
 using System.ComponentModel; // For ClosingEventArgs
 using System.Windows.Threading; // For Dispatcher
-using System.Runtime.InteropServices; // For Clipboard check
+using System.Runtime.InteropServices;
+using System.Windows.Media.Imaging; // For Clipboard check
 
 namespace SAFP.Wpf
 {
@@ -26,6 +27,8 @@ namespace SAFP.Wpf
             Debug.WriteLine("[MainWindow] Constructor starting...");
             try
             {
+                this.Icon = new BitmapImage(new Uri("pack://application:,,,/app.ico"));
+
                 InitializeComponent();
                 Debug.WriteLine("[MainWindow] InitializeComponent finished.");
                 _viewModel = new MainViewModel(masterPassword, initialData);

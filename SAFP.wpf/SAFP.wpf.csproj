@@ -6,10 +6,21 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
+
+        <!-- Self-contained Einstellungen -->
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>true</PublishSingleFile>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <PublishTrimmed>false</PublishTrimmed>
+
+        <!-- Icon für die EXE -->
+        <ApplicationIcon>app.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SAFP.core\SAFP.core.csproj" />
+        <ProjectReference Include="..\SAFP.core\SAFP.core.csproj" />
+        <None Include="app.ico" />
     </ItemGroup>
 
 </Project>

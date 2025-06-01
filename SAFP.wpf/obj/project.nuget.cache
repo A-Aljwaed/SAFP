@@ -1,15 +1,21 @@
 {
   "version": 2,
-  "dgSpecHash": "ZervjqHli10=",
+  "dgSpecHash": "hjqRK/chUgk=",
   "success": true,
   "projectFilePath": "C:\\Users\\ahmad\\RiderProjects\\SAFP\\SAFP.wpf\\SAFP.wpf.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ahmad\\.nuget\\packages\\jetbrains.annotations\\11.1.0\\jetbrains.annotations.11.1.0.nupkg.sha512",
+    "C:\\Users\\ahmad\\.nuget\\packages\\microsoft.net.illink.tasks\\9.0.5\\microsoft.net.illink.tasks.9.0.5.nupkg.sha512",
     "C:\\Users\\ahmad\\.nuget\\packages\\microsoft.netcore.platforms\\1.0.1\\microsoft.netcore.platforms.1.0.1.nupkg.sha512",
     "C:\\Users\\ahmad\\.nuget\\packages\\microsoft.netcore.targets\\1.0.1\\microsoft.netcore.targets.1.0.1.nupkg.sha512",
+    "C:\\Users\\ahmad\\.nuget\\packages\\runtime.any.system.runtime\\4.1.0\\runtime.any.system.runtime.4.1.0.nupkg.sha512",
+    "C:\\Users\\ahmad\\.nuget\\packages\\system.private.uri\\4.0.1\\system.private.uri.4.0.1.nupkg.sha512",
     "C:\\Users\\ahmad\\.nuget\\packages\\system.runtime\\4.1.0\\system.runtime.4.1.0.nupkg.sha512",
     "C:\\Users\\ahmad\\.nuget\\packages\\zxcvbn-cs-netstandard\\1.0.0\\zxcvbn-cs-netstandard.1.0.0.nupkg.sha512",
-    "C:\\Users\\ahmad\\.nuget\\packages\\zxcvbn-extra\\1.0.2\\zxcvbn-extra.1.0.2.nupkg.sha512"
+    "C:\\Users\\ahmad\\.nuget\\packages\\zxcvbn-extra\\1.0.2\\zxcvbn-extra.1.0.2.nupkg.sha512",
+    "C:\\Users\\ahmad\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\9.0.5\\microsoft.netcore.app.runtime.win-x64.9.0.5.nupkg.sha512",
+    "C:\\Users\\ahmad\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\9.0.5\\microsoft.windowsdesktop.app.runtime.win-x64.9.0.5.nupkg.sha512",
+    "C:\\Users\\ahmad\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\9.0.5\\microsoft.aspnetcore.app.runtime.win-x64.9.0.5.nupkg.sha512"
   ],
   "logs": []
 }
