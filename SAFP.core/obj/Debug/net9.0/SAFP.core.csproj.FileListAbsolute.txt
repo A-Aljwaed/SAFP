@@ -1,0 +1,13 @@
+/home/runner/work/SAFP/SAFP/SAFP.core/bin/Debug/net9.0/SAFP.core.deps.json
+/home/runner/work/SAFP/SAFP/SAFP.core/bin/Debug/net9.0/SAFP.core.dll
+/home/runner/work/SAFP/SAFP/SAFP.core/bin/Debug/net9.0/SAFP.core.pdb
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.csproj.AssemblyReference.cache
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.AssemblyInfoInputs.cache
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.AssemblyInfo.cs
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.csproj.CoreCompileInputs.cache
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.sourcelink.json
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.dll
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/refint/SAFP.core.dll
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/SAFP.core.pdb
+/home/runner/work/SAFP/SAFP/SAFP.core/obj/Debug/net9.0/ref/SAFP.core.dll

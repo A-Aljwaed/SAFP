@@ -197,19 +197,37 @@ namespace SAFP.Wpf
         {
             Debug.WriteLine($"[App] Application exiting with code: {e.ApplicationExitCode}");
             
-            // Securely delete browser files when app closes
-            if (_browserManager != null)
+            // Backup and securely delete browser files when app closes
+            if (_browserManager != null && !string.IsNullOrEmpty(MasterPassword))
             {
                 try
                 {
+                    // First, backup browser files to ensure they're up-to-date
+                    Debug.WriteLine("[App] Backing up browser files before exit...");
+                    var (backupSuccess, backupMessages) = await _browserManager.BackupBrowserFilesAsync(MasterPassword);
+                    Debug.WriteLine($"[App] Browser file backup completed. Success: {backupSuccess}");
+                    if (backupSuccess)
+                    {
+                        Debug.WriteLine("[App] Browser backup successful. Messages: " + string.Join("; ", backupMessages));
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[App] Browser backup had issues: " + string.Join("; ", backupMessages));
+                    }
+                    
+                    // Then securely delete browser files for security
                     Debug.WriteLine("[App] Securely deleting browser files on exit...");
                     var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
                     Debug.WriteLine($"[App] Browser file deletion completed. Success: {deleteSuccess}");
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[App] Error during browser file cleanup: {ex.Message}");
+                    Debug.WriteLine($"[App] Error during browser file backup/cleanup: {ex.Message}");
                 }
+            }
+            else
+            {
+                Debug.WriteLine("[App] Skipping browser backup/cleanup - manager or password not available");
             }
             
             base.OnExit(e);
