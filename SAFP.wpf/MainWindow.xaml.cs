@@ -62,7 +62,7 @@ namespace SAFP.Wpf
         }
 
 
-        private async void Window_Closing(object sender, CancelEventArgs e)
+        private void Window_Closing(object sender, CancelEventArgs e)
         {
             Debug.WriteLine($"[MainWindow] Window_Closing event triggered. CancelEventArgs.Cancel = {e.Cancel}");
             if (e.Cancel) { Debug.WriteLine("[MainWindow] Closing already cancelled."); return; }
@@ -73,11 +73,26 @@ namespace SAFP.Wpf
                  {
                      Debug.WriteLine("[MainWindow] Exit cancelled by ViewModel. Setting e.Cancel = true.");
                      e.Cancel = true;
-                 } else {
+                 }
+                 else
+                 {
                       Debug.WriteLine("[MainWindow] Exit allowed by ViewModel.");
                       
-                      // Backup and cleanup browser files before closing
-                      await _viewModel.BackupAndCleanupBrowserFilesOnExitAsync();
+                      // Check if we already performed the cleanup to avoid duplicate execution
+                      if (!_viewModel.HasPerformedExitCleanup)
+                      {
+                          // Cancel the initial close event and perform async cleanup
+                          e.Cancel = true;
+                          Debug.WriteLine("[MainWindow] Cancelling close to perform async browser backup...");
+                          
+                          // Perform the async cleanup, then close the window programmatically
+                          _ = PerformExitCleanupAndClose();
+                      }
+                      else
+                      {
+                          Debug.WriteLine("[MainWindow] Exit cleanup already performed. Allowing window to close.");
+                          // Allow the window to close since cleanup is done
+                      }
                  }
             }
             catch (Exception ex)
@@ -86,6 +101,27 @@ namespace SAFP.Wpf
                 MessageBox.Show($"Error during window closing: {ex.Message}", "Closing Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
              Debug.WriteLine($"[MainWindow] Window_Closing event finished. CancelEventArgs.Cancel = {e.Cancel}");
+        }
+
+        private async Task PerformExitCleanupAndClose()
+        {
+            try
+            {
+                Debug.WriteLine("[MainWindow] Performing exit cleanup...");
+                await _viewModel.BackupAndCleanupBrowserFilesOnExitAsync();
+                Debug.WriteLine("[MainWindow] Exit cleanup completed. Closing window programmatically.");
+                
+                // Close the window programmatically after cleanup completes
+                Application.Current.Dispatcher.Invoke(() => this.Close());
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainWindow] Error during async exit cleanup: {ex}");
+                MessageBox.Show($"An error occurred during application exit: {ex.Message}", "Exit Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                
+                // Still try to close even if cleanup failed
+                Application.Current.Dispatcher.Invoke(() => this.Close());
+            }
         }
     }
 
@@ -96,6 +132,9 @@ namespace SAFP.Wpf
         private readonly BrowserFileManager _browserManager;
         private string _masterPassword;
         private Dictionary<string, PasswordEntry> _passwordData;
+        
+        // Flag to track if exit cleanup has been performed
+        public bool HasPerformedExitCleanup { get; private set; } = false;
 
         // *** WICHTIG: Initialisiere die Collection hier ***
         private ObservableCollection<PasswordEntry> _passwordEntries = new ObservableCollection<PasswordEntry>();
@@ -424,8 +463,9 @@ namespace SAFP.Wpf
              {
                  Debug.WriteLine("[MainViewModel] User confirmed exit.");
                  StopClipboardTimer();
-                 // Note: Don't clear _masterPassword here yet - it's needed for browser backup
-                 // It will be cleared in BackupAndCleanupBrowserFilesOnExitAsync after backup
+                 // Note: Don't clear sensitive data here - it's all deferred until after backup
+                 // in BackupAndCleanupBrowserFilesOnExitAsync to ensure the master password
+                 // and data are available for the backup operation
                  try { Clipboard.Clear(); } catch { /* Ignore */ }
                  return true;
              }
@@ -439,6 +479,9 @@ namespace SAFP.Wpf
         /// </summary>
         public async Task BackupAndCleanupBrowserFilesOnExitAsync()
         {
+            // Mark that we're performing exit cleanup
+            HasPerformedExitCleanup = true;
+            
             // Use the ViewModel's master password which should still be available at this point
             string? masterPassword = _masterPassword;
             
@@ -450,24 +493,28 @@ namespace SAFP.Wpf
                     Debug.WriteLine("[MainViewModel] Backing up browser files before exit...");
                     var (backupSuccess, backupMessages) = await _browserManager.BackupBrowserFilesAsync(masterPassword);
                     Debug.WriteLine($"[MainViewModel] Browser file backup completed. Success: {backupSuccess}");
+                    
+                    // Only proceed with deletion if backup was successful
                     if (backupSuccess)
                     {
-                        Debug.WriteLine("[MainViewModel] Browser backup successful.");
+                        Debug.WriteLine("[MainViewModel] Browser backup successful. Proceeding with secure deletion.");
+                        
+                        // Then securely delete browser files for security
+                        Debug.WriteLine("[MainViewModel] Securely deleting browser files on exit...");
+                        var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
+                        Debug.WriteLine($"[MainViewModel] Browser file deletion completed. Success: {deleteSuccess}");
                     }
                     else
                     {
-                        Debug.WriteLine("[MainViewModel] Browser backup had issues: " + string.Join("; ", backupMessages));
+                        Debug.WriteLine("[MainViewModel] Browser backup failed or incomplete. Skipping deletion to preserve original files: " + string.Join("; ", backupMessages));
+                        // Don't delete files if backup failed - preserve the originals
                     }
-                    
-                    // Then securely delete browser files for security
-                    Debug.WriteLine("[MainViewModel] Securely deleting browser files on exit...");
-                    var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
-                    Debug.WriteLine($"[MainViewModel] Browser file deletion completed. Success: {deleteSuccess}");
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"[MainViewModel] Error during browser file backup/cleanup: {ex.Message}");
                     // Don't show error to user - this is a silent operation
+                    // Don't delete files if an exception occurred during backup
                 }
             }
             else
@@ -475,7 +522,7 @@ namespace SAFP.Wpf
                 Debug.WriteLine("[MainViewModel] Skipping browser backup/cleanup - manager or password not available");
             }
             
-            // Now clear sensitive data after backup is complete
+            // Now clear sensitive data after backup attempt is complete
             Debug.WriteLine("[MainViewModel] Clearing sensitive data after browser backup.");
             _masterPassword = string.Empty;
             _passwordData.Clear();

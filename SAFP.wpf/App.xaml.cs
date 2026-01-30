@@ -197,37 +197,41 @@ namespace SAFP.Wpf
         {
             Debug.WriteLine($"[App] Application exiting with code: {e.ApplicationExitCode}");
             
-            // Backup and securely delete browser files when app closes
+            // Backup and securely delete browser files when app closes (fallback if MainWindow cleanup didn't execute)
             if (_browserManager != null && !string.IsNullOrEmpty(MasterPassword))
             {
                 try
                 {
                     // First, backup browser files to ensure they're up-to-date
-                    Debug.WriteLine("[App] Backing up browser files before exit...");
+                    Debug.WriteLine("[App] Backing up browser files before exit (fallback path)...");
                     var (backupSuccess, backupMessages) = await _browserManager.BackupBrowserFilesAsync(MasterPassword);
                     Debug.WriteLine($"[App] Browser file backup completed. Success: {backupSuccess}");
+                    
+                    // Only proceed with deletion if backup was successful
                     if (backupSuccess)
                     {
                         Debug.WriteLine("[App] Browser backup successful. Messages: " + string.Join("; ", backupMessages));
+                        
+                        // Then securely delete browser files for security
+                        Debug.WriteLine("[App] Securely deleting browser files on exit...");
+                        var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
+                        Debug.WriteLine($"[App] Browser file deletion completed. Success: {deleteSuccess}");
                     }
                     else
                     {
-                        Debug.WriteLine("[App] Browser backup had issues: " + string.Join("; ", backupMessages));
+                        Debug.WriteLine("[App] Browser backup failed or incomplete. Skipping deletion to preserve original files: " + string.Join("; ", backupMessages));
+                        // Don't delete files if backup failed - preserve the originals
                     }
-                    
-                    // Then securely delete browser files for security
-                    Debug.WriteLine("[App] Securely deleting browser files on exit...");
-                    var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
-                    Debug.WriteLine($"[App] Browser file deletion completed. Success: {deleteSuccess}");
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"[App] Error during browser file backup/cleanup: {ex.Message}");
+                    // Don't delete files if an exception occurred
                 }
             }
             else
             {
-                Debug.WriteLine("[App] Skipping browser backup/cleanup - manager or password not available");
+                Debug.WriteLine("[App] Skipping browser backup/cleanup - manager or password not available (likely already performed by MainWindow)");
             }
             
             base.OnExit(e);
