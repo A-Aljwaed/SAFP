@@ -8,6 +8,7 @@ using System.Text.Json; // For BrowserBackupData serialization
 using System.Threading.Tasks;
 using System.Buffers.Text; // For Base64 - Not strictly needed with Convert
 using System.Security.Cryptography; // Potentially needed if we were doing crypto here
+using System.ComponentModel; // For Win32Exception
 
 // Namespace updated to SAFP.Core
 namespace SAFP.Core
@@ -19,6 +20,44 @@ namespace SAFP.Core
     /// </summary>
     public class BrowserFileManager
     {
+        #region Windows API P/Invoke for Forced Deletion
+        
+        // Windows API constants and structures for file handle management
+        private const uint GENERIC_READ = 0x80000000;
+        private const uint GENERIC_WRITE = 0x40000000;
+        private const uint FILE_SHARE_READ = 0x00000001;
+        private const uint FILE_SHARE_WRITE = 0x00000002;
+        private const uint FILE_SHARE_DELETE = 0x00000004;
+        private const uint OPEN_EXISTING = 3;
+        private const uint FILE_FLAG_DELETE_ON_CLOSE = 0x04000000;
+        private const uint FILE_FLAG_BACKUP_SEMANTICS = 0x02000000;
+        private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+        
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern IntPtr CreateFile(
+            string lpFileName,
+            uint dwDesiredAccess,
+            uint dwShareMode,
+            IntPtr lpSecurityAttributes,
+            uint dwCreationDisposition,
+            uint dwFlagsAndAttributes,
+            IntPtr hTemplateFile);
+        
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CloseHandle(IntPtr hObject);
+        
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool MoveFileEx(
+            string lpExistingFileName,
+            string? lpNewFileName,
+            uint dwFlags);
+        
+        private const uint MOVEFILE_DELAY_UNTIL_REBOOT = 0x00000004;
+        
+        #endregion
+        
         private readonly PasswordManagerLogic _logic; // Uses the core logic for encryption/decryption
         private const string BrowserDataFile = "browser_vault.safp"; // Backup filename using new extension
         private readonly string _backupFilePath; // Full path to the backup file
@@ -215,9 +254,113 @@ namespace SAFP.Core
         // --- Secure File Management ---
 
         /// <summary>
-        /// Securely deletes a file by overwriting it multiple times before deletion.
+        /// Attempts to forcibly delete a file that may be locked by another process.
+        /// Uses multiple strategies including Windows API calls to close handles.
         /// </summary>
-        private void SecureDeleteFile(string filePath)
+        private bool ForceDeleteLockedFile(string filePath)
+        {
+            if (!File.Exists(filePath))
+                return true;
+
+            // Only use Windows-specific APIs on Windows
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Console.WriteLine($"Force deletion not supported on this platform for: {filePath}");
+                return false;
+            }
+
+            Console.WriteLine($"Attempting forced deletion of locked file: {filePath}");
+
+            try
+            {
+                // Strategy 1: Try to open with DELETE_ON_CLOSE flag
+                // This marks the file for deletion when all handles are closed
+                IntPtr handle = CreateFile(
+                    filePath,
+                    GENERIC_READ | GENERIC_WRITE,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                    IntPtr.Zero,
+                    OPEN_EXISTING,
+                    FILE_FLAG_DELETE_ON_CLOSE | FILE_FLAG_BACKUP_SEMANTICS,
+                    IntPtr.Zero);
+
+                if (handle != INVALID_HANDLE_VALUE)
+                {
+                    Console.WriteLine($"Successfully opened file with DELETE_ON_CLOSE: {filePath}");
+                    CloseHandle(handle);
+                    
+                    // Brief delay to allow OS to process the deletion
+                    // Using Thread.Sleep here is intentional as this is a synchronous operation
+                    // dealing with OS-level file handles, not async I/O
+                    System.Threading.Thread.Sleep(100);
+                    if (!File.Exists(filePath))
+                    {
+                        Console.WriteLine($"File successfully deleted: {filePath}");
+                        return true;
+                    }
+                }
+                else
+                {
+                    int error = Marshal.GetLastWin32Error();
+                    Console.WriteLine($"Could not open file with DELETE_ON_CLOSE (Error {error}): {filePath}");
+                }
+
+                // Strategy 2: Move file to temp location and mark for deletion on reboot
+                string tempPath = Path.Combine(Path.GetTempPath(), $"safp_delete_{Guid.NewGuid()}.tmp");
+                
+                try
+                {
+                    File.Move(filePath, tempPath);
+                    Console.WriteLine($"Moved locked file to temp location: {tempPath}");
+                    
+                    // Try to delete the moved file
+                    try
+                    {
+                        File.Delete(tempPath);
+                        Console.WriteLine($"Successfully deleted moved file: {tempPath}");
+                        return true;
+                    }
+                    catch
+                    {
+                        // If still can't delete, mark for deletion on reboot
+                        if (MoveFileEx(tempPath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
+                        {
+                            Console.WriteLine($"Marked file for deletion on reboot: {tempPath}");
+                            return true;
+                        }
+                    }
+                }
+                catch (Exception moveEx)
+                {
+                    Console.WriteLine($"Could not move file to temp location: {moveEx.Message}");
+                }
+
+                // Strategy 3: Mark original file for deletion on reboot
+                if (MoveFileEx(filePath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
+                {
+                    Console.WriteLine($"Marked file for deletion on reboot: {filePath}");
+                    return true;
+                }
+                else
+                {
+                    int error = Marshal.GetLastWin32Error();
+                    Console.WriteLine($"Could not mark file for deletion on reboot (Error {error}): {filePath}");
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in ForceDeleteLockedFile: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Securely deletes a file by overwriting it multiple times before deletion.
+        /// If the file is locked, attempts forced deletion using Windows APIs.
+        /// </summary>
+        private void SecureDeleteFile(string filePath, bool forceIfLocked = true)
         {
             if (!File.Exists(filePath)) return;
 
@@ -267,11 +410,72 @@ namespace SAFP.Core
                 File.Delete(filePath);
                 Console.WriteLine($"Securely deleted: {filePath}");
             }
+            catch (IOException ioEx) when (forceIfLocked)
+            {
+                // Check for ERROR_SHARING_VIOLATION (0x20) which indicates file is in use
+                const int ERROR_SHARING_VIOLATION = 32;
+                const int ERROR_LOCK_VIOLATION = 33;
+                int hResult = ioEx.HResult & 0xFFFF;
+                
+                if (hResult == ERROR_SHARING_VIOLATION || hResult == ERROR_LOCK_VIOLATION || 
+                    ioEx.Message.Contains("being used by another process"))
+                {
+                    Console.WriteLine($"File is locked by another process: {filePath}");
+                    Console.WriteLine("Attempting forced deletion (deletion is being enforced / löschung wird erzwungen)...");
+                    
+                    if (ForceDeleteLockedFile(filePath))
+                    {
+                        Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Warning: Could not force delete {filePath}: File will be removed on next reboot or when unlocked.");
+                    }
+                }
+                else
+                {
+                    // Re-throw if it's a different type of IOException
+                    throw;
+                }
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"Warning: Could not securely delete {filePath}: {ex.Message}");
-                // Try normal deletion as fallback
-                try { File.Delete(filePath); } catch { }
+                
+                // If forced deletion is enabled and on Windows, try it
+                if (forceIfLocked && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Console.WriteLine("Attempting forced deletion...");
+                    if (ForceDeleteLockedFile(filePath))
+                    {
+                        Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                    }
+                    else
+                    {
+                        // Try normal deletion as final fallback
+                        try 
+                        { 
+                            File.Delete(filePath); 
+                            Console.WriteLine($"Deleted using fallback method: {filePath}"); 
+                        } 
+                        catch 
+                        { 
+                            Console.WriteLine($"All deletion methods failed for: {filePath}"); 
+                        }
+                    }
+                }
+                else
+                {
+                    // Try normal deletion as fallback
+                    try 
+                    { 
+                        File.Delete(filePath); 
+                    } 
+                    catch 
+                    { 
+                        /* Ignore if deletion fails */ 
+                    }
+                }
             }
         }
 
