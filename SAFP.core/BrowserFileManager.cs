@@ -289,7 +289,9 @@ namespace SAFP.Core
                     Console.WriteLine($"Successfully opened file with DELETE_ON_CLOSE: {filePath}");
                     CloseHandle(handle);
                     
-                    // Check if file still exists after a brief delay
+                    // Brief delay to allow OS to process the deletion
+                    // Using Thread.Sleep here is intentional as this is a synchronous operation
+                    // dealing with OS-level file handles, not async I/O
                     System.Threading.Thread.Sleep(100);
                     if (!File.Exists(filePath))
                     {
@@ -408,18 +410,32 @@ namespace SAFP.Core
                 File.Delete(filePath);
                 Console.WriteLine($"Securely deleted: {filePath}");
             }
-            catch (IOException ioEx) when (forceIfLocked && ioEx.Message.Contains("being used by another process"))
+            catch (IOException ioEx) when (forceIfLocked)
             {
-                Console.WriteLine($"File is locked by another process: {filePath}");
-                Console.WriteLine("Attempting forced deletion (löschung wird erzwungen)...");
+                // Check for ERROR_SHARING_VIOLATION (0x20) which indicates file is in use
+                const int ERROR_SHARING_VIOLATION = 32;
+                const int ERROR_LOCK_VIOLATION = 33;
+                int hResult = ioEx.HResult & 0xFFFF;
                 
-                if (ForceDeleteLockedFile(filePath))
+                if (hResult == ERROR_SHARING_VIOLATION || hResult == ERROR_LOCK_VIOLATION || 
+                    ioEx.Message.Contains("being used by another process"))
                 {
-                    Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                    Console.WriteLine($"File is locked by another process: {filePath}");
+                    Console.WriteLine("Attempting forced deletion (deletion is being enforced / löschung wird erzwungen)...");
+                    
+                    if (ForceDeleteLockedFile(filePath))
+                    {
+                        Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Warning: Could not force delete {filePath}: File will be removed on next reboot or when unlocked.");
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"Warning: Could not force delete {filePath}: File will be removed on next reboot or when unlocked.");
+                    // Re-throw if it's a different type of IOException
+                    throw;
                 }
             }
             catch (Exception ex)
@@ -437,14 +453,28 @@ namespace SAFP.Core
                     else
                     {
                         // Try normal deletion as final fallback
-                        try { File.Delete(filePath); Console.WriteLine($"Deleted using fallback method: {filePath}"); } 
-                        catch { Console.WriteLine($"All deletion methods failed for: {filePath}"); }
+                        try 
+                        { 
+                            File.Delete(filePath); 
+                            Console.WriteLine($"Deleted using fallback method: {filePath}"); 
+                        } 
+                        catch 
+                        { 
+                            Console.WriteLine($"All deletion methods failed for: {filePath}"); 
+                        }
                     }
                 }
                 else
                 {
                     // Try normal deletion as fallback
-                    try { File.Delete(filePath); } catch { }
+                    try 
+                    { 
+                        File.Delete(filePath); 
+                    } 
+                    catch 
+                    { 
+                        /* Ignore if deletion fails */ 
+                    }
                 }
             }
         }
