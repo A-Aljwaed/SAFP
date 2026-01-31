@@ -16,6 +16,9 @@
 
         <!-- Icon für die EXE -->
         <ApplicationIcon>app.ico</ApplicationIcon>
+        
+        <!-- Application Manifest for UAC elevation -->
+        <ApplicationManifest>app.manifest</ApplicationManifest>
     </PropertyGroup>
 
     <ItemGroup>

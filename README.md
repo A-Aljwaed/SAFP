@@ -42,6 +42,24 @@ A robust, secure password manager and browser data protection solution built wit
   - Memory protection for sensitive data
   - Automatic vault locking
 
+## 🚀 Getting Started
+
+### System Requirements
+
+- **Operating System**: Windows 7 or later (Windows 10/11 recommended)
+- **Framework**: .NET 9.0 Runtime
+- **Privileges**: Administrator rights required
+
+### Installation & Running
+
+SAFP requires administrator privileges to perform secure browser data operations. When you launch the application, Windows will display a User Account Control (UAC) prompt requesting administrator access. This is necessary to:
+
+- Schedule deletion of locked browser files on system reboot
+- Perform secure file operations on browser data
+- Ensure complete cleanup of sensitive data
+
+Simply approve the UAC prompt when launching SAFP.exe to proceed.
+
 ## 🛠️ Technical Stack
 
 - **Framework**: .NET 9.0
