@@ -27,7 +27,17 @@ namespace SAFP.Wpf
             Debug.WriteLine("[MainWindow] Constructor starting...");
             try
             {
-                this.Icon = new BitmapImage(new Uri("pack://application:,,,/app.ico"));
+                try
+                {
+                    // Try to load the application icon
+                    var iconUri = new Uri("pack://application:,,,/app.ico", UriKind.Absolute);
+                    this.Icon = new BitmapImage(iconUri);
+                }
+                catch (Exception iconEx)
+                {
+                    Debug.WriteLine($"[MainWindow] Warning: Failed to load window icon: {iconEx.Message}");
+                    // Continue without icon - not critical for application functionality
+                }
 
                 InitializeComponent();
                 Debug.WriteLine("[MainWindow] InitializeComponent finished.");
