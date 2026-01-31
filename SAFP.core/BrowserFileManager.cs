@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Buffers.Text; // For Base64 - Not strictly needed with Convert
 using System.Security.Cryptography; // Potentially needed if we were doing crypto here
 using System.ComponentModel; // For Win32Exception
+using System.Security.Principal; // For WindowsIdentity to check admin privileges
 
 // Namespace updated to SAFP.Core
 namespace SAFP.Core
@@ -254,6 +255,28 @@ namespace SAFP.Core
         // --- Secure File Management ---
 
         /// <summary>
+        /// Checks if the current process is running with administrator privileges on Windows.
+        /// </summary>
+        private bool IsRunningAsAdministrator()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                return false;
+                
+            try
+            {
+                using (var identity = WindowsIdentity.GetCurrent())
+                {
+                    var principal = new WindowsPrincipal(identity);
+                    return principal.IsInRole(WindowsBuiltInRole.Administrator);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Attempts to forcibly delete a file that may be locked by another process.
         /// Uses multiple strategies including Windows API calls to close handles.
         /// </summary>
@@ -270,6 +293,7 @@ namespace SAFP.Core
             }
 
             Console.WriteLine($"Attempting forced deletion of locked file: {filePath}");
+            bool isAdmin = IsRunningAsAdministrator();
 
             try
             {
@@ -303,6 +327,12 @@ namespace SAFP.Core
                 {
                     int error = Marshal.GetLastWin32Error();
                     Console.WriteLine($"Could not open file with DELETE_ON_CLOSE (Error {error}): {filePath}");
+                    
+                    // Error 32 = File in use by another process (likely browser is running)
+                    if (error == 32)
+                    {
+                        Console.WriteLine($"File is currently in use. Close any browsers using this file to allow deletion.");
+                    }
                 }
 
                 // Strategy 2: Move file to temp location and mark for deletion on reboot
@@ -322,11 +352,15 @@ namespace SAFP.Core
                     }
                     catch
                     {
-                        // If still can't delete, mark for deletion on reboot
-                        if (MoveFileEx(tempPath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
+                        // If still can't delete and running as admin, mark for deletion on reboot
+                        if (isAdmin && MoveFileEx(tempPath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
                         {
                             Console.WriteLine($"Marked file for deletion on reboot: {tempPath}");
                             return true;
+                        }
+                        else if (!isAdmin)
+                        {
+                            Console.WriteLine($"Cannot schedule deletion on reboot: Administrator privileges required.");
                         }
                     }
                 }
@@ -335,16 +369,24 @@ namespace SAFP.Core
                     Console.WriteLine($"Could not move file to temp location: {moveEx.Message}");
                 }
 
-                // Strategy 3: Mark original file for deletion on reboot
-                if (MoveFileEx(filePath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
+                // Strategy 3: Mark original file for deletion on reboot (requires admin privileges)
+                if (isAdmin)
                 {
-                    Console.WriteLine($"Marked file for deletion on reboot: {filePath}");
-                    return true;
+                    if (MoveFileEx(filePath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
+                    {
+                        Console.WriteLine($"Marked file for deletion on reboot: {filePath}");
+                        return true;
+                    }
+                    else
+                    {
+                        int error = Marshal.GetLastWin32Error();
+                        Console.WriteLine($"Could not mark file for deletion on reboot (Error {error}): {filePath}");
+                    }
                 }
                 else
                 {
-                    int error = Marshal.GetLastWin32Error();
-                    Console.WriteLine($"Could not mark file for deletion on reboot (Error {error}): {filePath}");
+                    Console.WriteLine($"Cannot schedule deletion on reboot: Administrator privileges required.");
+                    Console.WriteLine($"To enable automatic deletion on reboot, run SAFP as administrator.");
                 }
 
                 return false;
@@ -429,7 +471,13 @@ namespace SAFP.Core
                     }
                     else
                     {
-                        Console.WriteLine($"Warning: Could not force delete {filePath}: File will be removed on next reboot or when unlocked.");
+                        string fileName = Path.GetFileName(filePath);
+                        Console.WriteLine($"Warning: Could not delete locked file: {fileName}");
+                        Console.WriteLine($"This file is currently in use by a browser. Please close all browsers and try again.");
+                        if (!IsRunningAsAdministrator())
+                        {
+                            Console.WriteLine($"Note: Running SAFP as administrator would allow scheduling file deletion on reboot.");
+                        }
                     }
                 }
                 else
