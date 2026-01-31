@@ -79,6 +79,7 @@ namespace SAFP.Core
         // Constants for user-facing messages
         private const string ApplicationName = "SAFP";
         private const string FileLockedByBrowserMessage = "This file is currently in use by a browser. Please close all browsers and try again.";
+        private const string FileScheduledForRebootMessage = "The file will be removed when you restart your computer.";
 
         public BrowserFileManager()
         {
@@ -299,6 +300,8 @@ namespace SAFP.Core
         /// </summary>
         private DeletionResult ForceDeleteLockedFile(string filePath)
         {
+            // If file doesn't exist, the goal is already achieved
+            // Return DeletedImmediately as the file is not present on disk
             if (!File.Exists(filePath))
                 return DeletionResult.DeletedImmediately;
 
@@ -490,7 +493,7 @@ namespace SAFP.Core
                     else if (deletionResult == DeletionResult.ScheduledForReboot)
                     {
                         Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
-                        Console.WriteLine($"The file will be removed when you restart your computer.");
+                        Console.WriteLine(FileScheduledForRebootMessage);
                     }
                     else
                     {
@@ -525,7 +528,7 @@ namespace SAFP.Core
                     else if (deletionResult == DeletionResult.ScheduledForReboot)
                     {
                         Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
-                        Console.WriteLine($"The file will be removed when you restart your computer.");
+                        Console.WriteLine(FileScheduledForRebootMessage);
                     }
                     else
                     {
