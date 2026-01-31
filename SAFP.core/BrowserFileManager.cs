@@ -21,6 +21,19 @@ namespace SAFP.Core
     /// </summary>
     public class BrowserFileManager
     {
+        /// <summary>
+        /// Represents the result of a file deletion attempt.
+        /// </summary>
+        private enum DeletionResult
+        {
+            /// <summary>File was successfully deleted immediately.</summary>
+            DeletedImmediately,
+            /// <summary>File was scheduled for deletion on next system reboot.</summary>
+            ScheduledForReboot,
+            /// <summary>File deletion failed.</summary>
+            Failed
+        }
+
         #region Windows API P/Invoke for Forced Deletion
         
         // Windows API constants and structures for file handle management
@@ -66,6 +79,7 @@ namespace SAFP.Core
         // Constants for user-facing messages
         private const string ApplicationName = "SAFP";
         private const string FileLockedByBrowserMessage = "This file is currently in use by a browser. Please close all browsers and try again.";
+        private const string FileScheduledForRebootMessage = "The file will be removed when you restart your computer.";
 
         public BrowserFileManager()
         {
@@ -284,16 +298,18 @@ namespace SAFP.Core
         /// Attempts to forcibly delete a file that may be locked by another process.
         /// Uses multiple strategies including Windows API calls to close handles.
         /// </summary>
-        private bool ForceDeleteLockedFile(string filePath)
+        private DeletionResult ForceDeleteLockedFile(string filePath)
         {
+            // If file doesn't exist, the goal is already achieved
+            // Return DeletedImmediately as the file is not present on disk
             if (!File.Exists(filePath))
-                return true;
+                return DeletionResult.DeletedImmediately;
 
             // Only use Windows-specific APIs on Windows
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Console.WriteLine($"Force deletion not supported on this platform for: {filePath}");
-                return false;
+                return DeletionResult.Failed;
             }
 
             Console.WriteLine($"Attempting forced deletion of locked file: {filePath}");
@@ -324,7 +340,7 @@ namespace SAFP.Core
                     if (!File.Exists(filePath))
                     {
                         Console.WriteLine($"File successfully deleted: {filePath}");
-                        return true;
+                        return DeletionResult.DeletedImmediately;
                     }
                 }
                 else
@@ -352,7 +368,7 @@ namespace SAFP.Core
                     {
                         File.Delete(tempPath);
                         Console.WriteLine($"Successfully deleted moved file: {tempPath}");
-                        return true;
+                        return DeletionResult.DeletedImmediately;
                     }
                     catch
                     {
@@ -360,7 +376,7 @@ namespace SAFP.Core
                         if (isAdmin && MoveFileEx(tempPath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
                         {
                             Console.WriteLine($"Marked file for deletion on reboot: {tempPath}");
-                            return true;
+                            return DeletionResult.ScheduledForReboot;
                         }
                         else if (!isAdmin)
                         {
@@ -379,7 +395,7 @@ namespace SAFP.Core
                     if (MoveFileEx(filePath, null, MOVEFILE_DELAY_UNTIL_REBOOT))
                     {
                         Console.WriteLine($"Marked file for deletion on reboot: {filePath}");
-                        return true;
+                        return DeletionResult.ScheduledForReboot;
                     }
                     else
                     {
@@ -393,12 +409,12 @@ namespace SAFP.Core
                     Console.WriteLine($"To enable automatic deletion on reboot, run {ApplicationName} as administrator.");
                 }
 
-                return false;
+                return DeletionResult.Failed;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in ForceDeleteLockedFile: {ex.Message}");
-                return false;
+                return DeletionResult.Failed;
             }
         }
 
@@ -469,9 +485,15 @@ namespace SAFP.Core
                     Console.WriteLine($"File is locked by another process: {filePath}");
                     Console.WriteLine("Attempting forced deletion (deletion is being enforced / löschung wird erzwungen)...");
                     
-                    if (ForceDeleteLockedFile(filePath))
+                    var deletionResult = ForceDeleteLockedFile(filePath);
+                    if (deletionResult == DeletionResult.DeletedImmediately)
                     {
                         Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                    }
+                    else if (deletionResult == DeletionResult.ScheduledForReboot)
+                    {
+                        Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
+                        Console.WriteLine(FileScheduledForRebootMessage);
                     }
                     else
                     {
@@ -498,9 +520,15 @@ namespace SAFP.Core
                 if (forceIfLocked && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     Console.WriteLine("Attempting forced deletion...");
-                    if (ForceDeleteLockedFile(filePath))
+                    var deletionResult = ForceDeleteLockedFile(filePath);
+                    if (deletionResult == DeletionResult.DeletedImmediately)
                     {
                         Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                    }
+                    else if (deletionResult == DeletionResult.ScheduledForReboot)
+                    {
+                        Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
+                        Console.WriteLine(FileScheduledForRebootMessage);
                     }
                     else
                     {
