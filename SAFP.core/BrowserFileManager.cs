@@ -62,6 +62,10 @@ namespace SAFP.Core
         private readonly PasswordManagerLogic _logic; // Uses the core logic for encryption/decryption
         private const string BrowserDataFile = "browser_vault.safp"; // Backup filename using new extension
         private readonly string _backupFilePath; // Full path to the backup file
+        
+        // Constants for user-facing messages
+        private const string ApplicationName = "SAFP";
+        private const string FileLockedByBrowserMessage = "This file is currently in use by a browser. Please close all browsers and try again.";
 
         public BrowserFileManager()
         {
@@ -331,7 +335,7 @@ namespace SAFP.Core
                     // Error 32 = File in use by another process (likely browser is running)
                     if (error == 32)
                     {
-                        Console.WriteLine($"File is currently in use. Close any browsers using this file to allow deletion.");
+                        Console.WriteLine($"File is currently in use. Close any browsers using the file to allow deletion.");
                     }
                 }
 
@@ -386,7 +390,7 @@ namespace SAFP.Core
                 else
                 {
                     Console.WriteLine($"Cannot schedule deletion on reboot: Administrator privileges required.");
-                    Console.WriteLine($"To enable automatic deletion on reboot, run SAFP as administrator.");
+                    Console.WriteLine($"To enable automatic deletion on reboot, run {ApplicationName} as administrator.");
                 }
 
                 return false;
@@ -473,10 +477,10 @@ namespace SAFP.Core
                     {
                         string fileName = Path.GetFileName(filePath);
                         Console.WriteLine($"Warning: Could not delete locked file: {fileName}");
-                        Console.WriteLine($"This file is currently in use by a browser. Please close all browsers and try again.");
+                        Console.WriteLine(FileLockedByBrowserMessage);
                         if (!IsRunningAsAdministrator())
                         {
-                            Console.WriteLine($"Note: Running SAFP as administrator would allow scheduling file deletion on reboot.");
+                            Console.WriteLine($"Note: Running {ApplicationName} as administrator would allow scheduling file deletion on reboot.");
                         }
                     }
                 }
