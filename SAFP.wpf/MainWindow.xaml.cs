@@ -30,10 +30,9 @@ namespace SAFP.Wpf
                 try
                 {
                     // Try to load the application icon
-                    var iconUri = new Uri("pack://application:,,,/app.ico", UriKind.Absolute);
-                    this.Icon = new BitmapImage(iconUri);
+                    this.Icon = new BitmapImage(new Uri("pack://application:,,,/app.ico"));
                 }
-                catch (Exception iconEx)
+                catch (Exception iconEx) when (iconEx is IOException || iconEx is InvalidOperationException || iconEx is NotSupportedException)
                 {
                     Debug.WriteLine($"[MainWindow] Warning: Failed to load window icon: {iconEx.Message}");
                     // Continue without icon - not critical for application functionality
