@@ -20,7 +20,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SAFP.core\SAFP.core.csproj" />
-        <None Include="app.ico" />
+        <Resource Include="app.ico" />
     </ItemGroup>
 
 </Project>
