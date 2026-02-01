@@ -112,8 +112,13 @@ namespace SAFP.Wpf
              Debug.WriteLine($"[MainWindow] Window_Closing event finished. CancelEventArgs.Cancel = {e.Cancel}");
         }
 
+        private bool _isClosing = false; // Prevent re-entrant Close() calls
+        
         private async Task PerformExitCleanupAndClose()
         {
+            if (_isClosing) return; // Already in progress
+            _isClosing = true;
+            
             try
             {
                 Debug.WriteLine("[MainWindow] Performing exit cleanup...");
@@ -135,12 +140,17 @@ namespace SAFP.Wpf
                     
                     if (result == MessageBoxResult.Yes)
                     {
-                        // Reset the flag so user can retry
+                        // Reset the flags so user can retry
                         _viewModel.HasPerformedExitCleanup = false;
+                        _isClosing = false;
                         // Retry the close operation
                         Application.Current.Dispatcher.Invoke(() => this.Close());
                     }
-                    // else: User chose not to retry, keep the window open
+                    else
+                    {
+                        // User chose not to retry, keep the window open
+                        _isClosing = false;
+                    }
                     return;
                 }
                 
@@ -154,8 +164,9 @@ namespace SAFP.Wpf
                 Debug.WriteLine($"[MainWindow] Error during async exit cleanup: {ex}");
                 MessageBox.Show($"حدث خطأ أثناء إنهاء التطبيق: {ex.Message}", "خطأ في الإنهاء", MessageBoxButton.OK, MessageBoxImage.Warning);
                 
-                // Reset the flag so user can retry
+                // Reset the flags so user can retry
                 _viewModel.HasPerformedExitCleanup = false;
+                _isClosing = false;
             }
         }
     }
@@ -555,10 +566,10 @@ namespace SAFP.Wpf
                         // Don't delete files if backup failed - preserve the originals
                     }
                 }
-                catch (IOException ex) when (ex.Message.Contains("locked"))
+                catch (FileLockedIOException ex)
                 {
                     Debug.WriteLine($"[MainViewModel] Browser files are locked: {ex.Message}");
-                    // Extract locked file names if available from the exception
+                    lockedFiles = ex.LockedFiles;
                     // Don't clear sensitive data yet - we'll need it if user retries
                     return (false, lockedFiles);
                 }

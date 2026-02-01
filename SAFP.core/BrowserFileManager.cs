@@ -15,6 +15,24 @@ using System.Security.Principal; // For WindowsIdentity to check admin privilege
 namespace SAFP.Core
 {
     /// <summary>
+    /// Custom exception for when a file is locked and cannot be deleted immediately.
+    /// </summary>
+    public class FileLockedIOException : IOException
+    {
+        public List<string> LockedFiles { get; }
+        
+        public FileLockedIOException(string message, List<string> lockedFiles) : base(message)
+        {
+            LockedFiles = lockedFiles ?? new List<string>();
+        }
+        
+        public FileLockedIOException(string message, string lockedFile) : base(message)
+        {
+            LockedFiles = new List<string> { lockedFile };
+        }
+    }
+    
+    /// <summary>
     /// Handles finding, backing up, and restoring browser credential storage FILES.
     /// WARNING: This operates on the browser's raw data files. It does NOT decrypt
     /// the passwords within them. Requires browsers to be CLOSED during operation.
@@ -509,7 +527,7 @@ namespace SAFP.Core
                         else
                         {
                             string fileName = Path.GetFileName(filePath);
-                            throw new IOException($"Cannot delete locked file immediately: {fileName}. {FileLockedByBrowserMessage}");
+                            throw new FileLockedIOException($"Cannot delete locked file immediately: {fileName}. {FileLockedByBrowserMessage}", filePath);
                         }
                     }
                     else
@@ -520,7 +538,7 @@ namespace SAFP.Core
                         {
                             errorMsg += $" Note: Running {ApplicationName} as administrator would enable additional deletion options.";
                         }
-                        throw new IOException(errorMsg);
+                        throw new FileLockedIOException(errorMsg, filePath);
                     }
                 }
                 else
@@ -553,7 +571,7 @@ namespace SAFP.Core
                         }
                         else
                         {
-                            throw new IOException($"Cannot delete file immediately: {Path.GetFileName(filePath)}. {FileLockedByBrowserMessage}");
+                            throw new FileLockedIOException($"Cannot delete file immediately: {Path.GetFileName(filePath)}. {FileLockedByBrowserMessage}", filePath);
                         }
                     }
                     else
@@ -615,6 +633,7 @@ namespace SAFP.Core
                 backupMessages.Add($"Failed to delete {failedCount} files. Please close all browsers.");
             }
             
+            // Success when no failures occurred (even if no files were found to delete)
             return (failedCount == 0, backupMessages);
         }
 
@@ -867,16 +886,16 @@ namespace SAFP.Core
                         deletedCount++; // Count as success since it will be deleted
                     }
                 }
-                catch (IOException ex) when (ex.Message.Contains("locked"))
+                catch (FileLockedIOException ex)
                 {
                     failedCount++;
-                    lockedFiles.Add(filePath);
+                    lockedFiles.AddRange(ex.LockedFiles);
                     messages.Add($"Cannot delete locked file: {Path.GetFileName(filePath)}");
                     
                     // If immediate deletion is required, propagate the error
                     if (requireImmediateDeletion)
                     {
-                        throw new IOException($"Browser files are locked and cannot be deleted. Please close all browsers and try again.", ex);
+                        throw new FileLockedIOException($"Browser files are locked and cannot be deleted. Please close all browsers and try again.", lockedFiles);
                     }
                 }
                 catch (Exception ex)
@@ -902,7 +921,8 @@ namespace SAFP.Core
                 messages.Add($"Failed to delete {failedCount} files.");
             }
             
-            return (deletedCount > 0 && failedCount == 0, messages, lockedFiles);
+            // Success when no failures occurred (even if no files were found)
+            return (failedCount == 0, messages, lockedFiles);
         }
 
         /// <summary>
