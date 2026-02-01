@@ -446,8 +446,10 @@ namespace SAFP.Core
         /// <returns>DeletionResult indicating how the file was deleted</returns>
         private DeletionResult SecureDeleteFile(string filePath, bool allowRebootDeletion = false)
         {
+            // If file doesn't exist, deletion goal is already achieved
+            // Return DeletedImmediately since the desired state (file absent) is reached
             if (!File.Exists(filePath)) 
-                return DeletionResult.DeletedImmediately; // File doesn't exist, goal achieved
+                return DeletionResult.DeletedImmediately;
 
             try
             {
@@ -495,6 +497,11 @@ namespace SAFP.Core
                 File.Delete(filePath);
                 Console.WriteLine($"Securely deleted: {filePath}");
                 return DeletionResult.DeletedImmediately;
+            }
+            catch (FileLockedIOException)
+            {
+                // Re-throw our custom exception as-is so callers can handle it properly
+                throw;
             }
             catch (IOException ioEx)
             {
@@ -547,7 +554,7 @@ namespace SAFP.Core
                     throw;
                 }
             }
-            catch (Exception ex) when (!(ex is IOException))
+            catch (Exception ex)
             {
                 Console.WriteLine($"Warning: Could not securely delete {filePath}: {ex.Message}");
                 

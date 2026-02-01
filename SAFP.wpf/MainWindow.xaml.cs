@@ -143,8 +143,8 @@ namespace SAFP.Wpf
                         // Reset the flags so user can retry
                         _viewModel.HasPerformedExitCleanup = false;
                         _isClosing = false;
-                        // Retry the close operation
-                        Application.Current.Dispatcher.Invoke(() => this.Close());
+                        // Retry the close operation using BeginInvoke to avoid synchronous execution
+                        Application.Current.Dispatcher.BeginInvoke(() => this.Close());
                     }
                     else
                     {
@@ -157,7 +157,8 @@ namespace SAFP.Wpf
                 Debug.WriteLine("[MainWindow] Exit cleanup completed successfully. Closing window programmatically.");
                 
                 // Close the window programmatically after cleanup completes
-                Application.Current.Dispatcher.Invoke(() => this.Close());
+                // Use BeginInvoke to avoid synchronous dispatcher execution during async operation
+                Application.Current.Dispatcher.BeginInvoke(() => this.Close());
             }
             catch (Exception ex)
             {
