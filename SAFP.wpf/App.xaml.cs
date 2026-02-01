@@ -213,8 +213,9 @@ namespace SAFP.Wpf
                         Debug.WriteLine("[App] Browser backup successful. Messages: " + string.Join("; ", backupMessages));
                         
                         // Then securely delete browser files for security
+                        // Allow reboot deletion as fallback since this is app shutdown
                         Debug.WriteLine("[App] Securely deleting browser files on exit...");
-                        var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
+                        var (deleteSuccess, deleteMessages, lockedFiles) = await _browserManager.SecureDeleteAllBrowserFilesAsync(requireImmediateDeletion: false);
                         Debug.WriteLine($"[App] Browser file deletion completed. Success: {deleteSuccess}");
                     }
                     else

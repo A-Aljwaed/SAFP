@@ -15,6 +15,24 @@ using System.Security.Principal; // For WindowsIdentity to check admin privilege
 namespace SAFP.Core
 {
     /// <summary>
+    /// Custom exception for when a file is locked and cannot be deleted immediately.
+    /// </summary>
+    public class FileLockedIOException : IOException
+    {
+        public List<string> LockedFiles { get; }
+        
+        public FileLockedIOException(string message, List<string> lockedFiles) : base(message)
+        {
+            LockedFiles = lockedFiles ?? new List<string>();
+        }
+        
+        public FileLockedIOException(string message, string lockedFile) : base(message)
+        {
+            LockedFiles = new List<string> { lockedFile };
+        }
+    }
+    
+    /// <summary>
     /// Handles finding, backing up, and restoring browser credential storage FILES.
     /// WARNING: This operates on the browser's raw data files. It does NOT decrypt
     /// the passwords within them. Requires browsers to be CLOSED during operation.
@@ -421,10 +439,17 @@ namespace SAFP.Core
         /// <summary>
         /// Securely deletes a file by overwriting it multiple times before deletion.
         /// If the file is locked, attempts forced deletion using Windows APIs.
+        /// Throws an exception if immediate deletion is not possible.
         /// </summary>
-        private void SecureDeleteFile(string filePath, bool forceIfLocked = true)
+        /// <param name="filePath">Path to the file to delete</param>
+        /// <param name="allowRebootDeletion">If true, allows scheduling deletion on reboot when immediate deletion fails. If false, throws an exception.</param>
+        /// <returns>DeletionResult indicating how the file was deleted</returns>
+        private DeletionResult SecureDeleteFile(string filePath, bool allowRebootDeletion = false)
         {
-            if (!File.Exists(filePath)) return;
+            // If file doesn't exist, deletion goal is already achieved
+            // Return DeletedImmediately since the desired state (file absent) is reached
+            if (!File.Exists(filePath)) 
+                return DeletionResult.DeletedImmediately;
 
             try
             {
@@ -471,8 +496,9 @@ namespace SAFP.Core
                 // Finally delete the file
                 File.Delete(filePath);
                 Console.WriteLine($"Securely deleted: {filePath}");
+                return DeletionResult.DeletedImmediately;
             }
-            catch (IOException ioEx) when (forceIfLocked)
+            catch (IOException ioEx)
             {
                 // Check for ERROR_SHARING_VIOLATION (0x20) which indicates file is in use
                 const int ERROR_SHARING_VIOLATION = 32;
@@ -489,26 +515,37 @@ namespace SAFP.Core
                     if (deletionResult == DeletionResult.DeletedImmediately)
                     {
                         Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                        return DeletionResult.DeletedImmediately;
                     }
                     else if (deletionResult == DeletionResult.ScheduledForReboot)
                     {
-                        Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
-                        Console.WriteLine(FileScheduledForRebootMessage);
+                        // Only allow reboot deletion if explicitly permitted
+                        if (allowRebootDeletion)
+                        {
+                            Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
+                            Console.WriteLine(FileScheduledForRebootMessage);
+                            return DeletionResult.ScheduledForReboot;
+                        }
+                        else
+                        {
+                            string fileName = Path.GetFileName(filePath);
+                            throw new FileLockedIOException($"Cannot delete locked file immediately: {fileName}. {FileLockedByBrowserMessage}", filePath);
+                        }
                     }
                     else
                     {
                         string fileName = Path.GetFileName(filePath);
-                        Console.WriteLine($"Warning: Could not delete locked file: {fileName}");
-                        Console.WriteLine(FileLockedByBrowserMessage);
+                        string errorMsg = $"Could not delete locked file: {fileName}. {FileLockedByBrowserMessage}";
                         if (!IsRunningAsAdministrator())
                         {
-                            Console.WriteLine($"Note: Running {ApplicationName} as administrator would allow scheduling file deletion on reboot.");
+                            errorMsg += $" Note: Running {ApplicationName} as administrator would enable additional deletion options.";
                         }
+                        throw new FileLockedIOException(errorMsg, filePath);
                     }
                 }
                 else
                 {
-                    // Re-throw if it's a different type of IOException
+                    // Re-throw if it's a different type of IOException (FileLockedIOException will propagate naturally)
                     throw;
                 }
             }
@@ -516,45 +553,37 @@ namespace SAFP.Core
             {
                 Console.WriteLine($"Warning: Could not securely delete {filePath}: {ex.Message}");
                 
-                // If forced deletion is enabled and on Windows, try it
-                if (forceIfLocked && RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                // Try forced deletion on Windows
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     Console.WriteLine("Attempting forced deletion...");
                     var deletionResult = ForceDeleteLockedFile(filePath);
                     if (deletionResult == DeletionResult.DeletedImmediately)
                     {
                         Console.WriteLine($"Successfully forced deletion of: {filePath}");
+                        return DeletionResult.DeletedImmediately;
                     }
                     else if (deletionResult == DeletionResult.ScheduledForReboot)
                     {
-                        Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
-                        Console.WriteLine(FileScheduledForRebootMessage);
+                        if (allowRebootDeletion)
+                        {
+                            Console.WriteLine($"File scheduled for deletion on reboot: {filePath}");
+                            Console.WriteLine(FileScheduledForRebootMessage);
+                            return DeletionResult.ScheduledForReboot;
+                        }
+                        else
+                        {
+                            throw new FileLockedIOException($"Cannot delete file immediately: {Path.GetFileName(filePath)}. {FileLockedByBrowserMessage}", filePath);
+                        }
                     }
                     else
                     {
-                        // Try normal deletion as final fallback
-                        try 
-                        { 
-                            File.Delete(filePath); 
-                            Console.WriteLine($"Deleted using fallback method: {filePath}"); 
-                        } 
-                        catch 
-                        { 
-                            Console.WriteLine($"All deletion methods failed for: {filePath}"); 
-                        }
+                        throw new IOException($"All deletion methods failed for: {Path.GetFileName(filePath)}");
                     }
                 }
                 else
                 {
-                    // Try normal deletion as fallback
-                    try 
-                    { 
-                        File.Delete(filePath); 
-                    } 
-                    catch 
-                    { 
-                        /* Ignore if deletion fails */ 
-                    }
+                    throw new IOException($"Could not delete file: {Path.GetFileName(filePath)}", ex);
                 }
             }
         }
@@ -562,7 +591,9 @@ namespace SAFP.Core
         /// <summary>
         /// Backs up browser files and securely deletes originals for protection.
         /// </summary>
-        public async Task<(bool Success, List<string> Messages)> BackupAndSecureDeleteAsync(string masterPassword)
+        /// <param name="masterPassword">Master password for encryption</param>
+        /// <param name="allowRebootDeletion">If true, allows scheduling deletion on reboot when immediate deletion fails</param>
+        public async Task<(bool Success, List<string> Messages)> BackupAndSecureDeleteAsync(string masterPassword, bool allowRebootDeletion = true)
         {
             var (backupSuccess, backupMessages) = await BackupBrowserFilesAsync(masterPassword);
             
@@ -575,22 +606,37 @@ namespace SAFP.Core
             // Securely delete original files after successful backup
             var filesToDelete = FindBrowserFiles();
             int deletedCount = 0;
+            int failedCount = 0;
             
             foreach (var filePath in filesToDelete)
             {
                 try
                 {
-                    SecureDeleteFile(filePath);
-                    deletedCount++;
+                    var result = SecureDeleteFile(filePath, allowRebootDeletion: allowRebootDeletion);
+                    if (result == DeletionResult.DeletedImmediately || result == DeletionResult.ScheduledForReboot)
+                    {
+                        deletedCount++;
+                    }
                 }
                 catch (Exception ex)
                 {
+                    failedCount++;
                     backupMessages.Add($"Warning: Could not delete {Path.GetFileName(filePath)}: {ex.Message}");
                 }
             }
             
-            backupMessages.Add($"Securely deleted {deletedCount} original browser files.");
-            return (true, backupMessages);
+            if (deletedCount > 0)
+            {
+                backupMessages.Add($"Securely deleted {deletedCount} original browser files.");
+            }
+            
+            if (failedCount > 0)
+            {
+                backupMessages.Add($"Failed to delete {failedCount} files. Please close all browsers.");
+            }
+            
+            // Success when no failures occurred (even if no files were found to delete)
+            return (failedCount == 0, backupMessages);
         }
 
         // --- Backup and Restore Logic ---
@@ -811,33 +857,79 @@ namespace SAFP.Core
         /// <summary>
         /// Securely deletes all browser credential files (for app shutdown).
         /// </summary>
-        public async Task<(bool Success, List<string> Messages)> SecureDeleteAllBrowserFilesAsync()
+        /// <param name="requireImmediateDeletion">If true, throws exception if files cannot be deleted immediately (no reboot scheduling)</param>
+        public async Task<(bool Success, List<string> Messages, List<string> LockedFiles)> SecureDeleteAllBrowserFilesAsync(bool requireImmediateDeletion = true)
         {
             var messages = new List<string>();
+            var lockedFiles = new List<string>();
             var filesToDelete = FindBrowserFiles();
             
             if (!filesToDelete.Any())
             {
                 messages.Add("No browser files found to delete.");
-                return (true, messages);
+                return (true, messages, lockedFiles);
             }
 
             int deletedCount = 0;
+            int failedCount = 0;
+            
             foreach (var filePath in filesToDelete)
             {
                 try
                 {
-                    SecureDeleteFile(filePath);
-                    deletedCount++;
+                    var result = SecureDeleteFile(filePath, allowRebootDeletion: !requireImmediateDeletion);
+                    if (result == DeletionResult.DeletedImmediately)
+                    {
+                        deletedCount++;
+                    }
+                    else if (result == DeletionResult.ScheduledForReboot)
+                    {
+                        messages.Add($"File '{Path.GetFileName(filePath)}' scheduled for deletion on reboot.");
+                        deletedCount++; // Count as success since it will be deleted
+                    }
+                }
+                catch (FileLockedIOException ex)
+                {
+                    failedCount++;
+                    lockedFiles.AddRange(ex.LockedFiles);
+                    messages.Add($"Cannot delete locked file: {Path.GetFileName(filePath)}");
+                    
+                    // If immediate deletion is required, propagate the error
+                    if (requireImmediateDeletion)
+                    {
+                        throw new FileLockedIOException($"Browser files are locked and cannot be deleted. Please close all browsers and try again.", lockedFiles);
+                    }
                 }
                 catch (Exception ex)
                 {
+                    failedCount++;
                     messages.Add($"Warning: Could not delete {Path.GetFileName(filePath)}: {ex.Message}");
+                    
+                    // If immediate deletion is required, propagate any deletion error
+                    if (requireImmediateDeletion)
+                    {
+                        throw;
+                    }
                 }
             }
             
-            messages.Add($"Securely deleted {deletedCount} browser files for security.");
-            return (deletedCount > 0, messages);
+            // Build summary message
+            var summaryMessages = new List<string>();
+            if (deletedCount > 0)
+            {
+                summaryMessages.Add($"Securely deleted {deletedCount} of {filesToDelete.Count} browser files.");
+            }
+            
+            if (failedCount > 0)
+            {
+                summaryMessages.Add($"Failed to delete {failedCount} files.");
+            }
+            
+            // Combine summary with detailed messages
+            var allMessages = summaryMessages.Concat(messages).ToList();
+            
+            // Success when no failures occurred (even if no files were found)
+            return (failedCount == 0, allMessages, lockedFiles);
         }
 
         /// <summary>
