@@ -498,11 +498,6 @@ namespace SAFP.Core
                 Console.WriteLine($"Securely deleted: {filePath}");
                 return DeletionResult.DeletedImmediately;
             }
-            catch (FileLockedIOException)
-            {
-                // Re-throw our custom exception as-is so callers can handle it properly
-                throw;
-            }
             catch (IOException ioEx)
             {
                 // Check for ERROR_SHARING_VIOLATION (0x20) which indicates file is in use
@@ -550,7 +545,7 @@ namespace SAFP.Core
                 }
                 else
                 {
-                    // Re-throw if it's a different type of IOException
+                    // Re-throw if it's a different type of IOException (FileLockedIOException will propagate naturally)
                     throw;
                 }
             }
@@ -918,18 +913,23 @@ namespace SAFP.Core
                 }
             }
             
+            // Build summary message
+            var summaryMessages = new List<string>();
             if (deletedCount > 0)
             {
-                messages.Insert(0, $"Securely deleted {deletedCount} of {filesToDelete.Count} browser files.");
+                summaryMessages.Add($"Securely deleted {deletedCount} of {filesToDelete.Count} browser files.");
             }
             
             if (failedCount > 0)
             {
-                messages.Add($"Failed to delete {failedCount} files.");
+                summaryMessages.Add($"Failed to delete {failedCount} files.");
             }
             
+            // Combine summary with detailed messages
+            var allMessages = summaryMessages.Concat(messages).ToList();
+            
             // Success when no failures occurred (even if no files were found)
-            return (failedCount == 0, messages, lockedFiles);
+            return (failedCount == 0, allMessages, lockedFiles);
         }
 
         /// <summary>
