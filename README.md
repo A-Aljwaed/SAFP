@@ -1,87 +1,87 @@
 
-# 🔐 Secure Automated File Protection (SAFP)
+# 🔐 الحماية الآمنة للملفات (SAFP)
 
-A robust, secure password manager and browser data protection solution built with modern .NET technologies.
+حل قوي وآمن لإدارة كلمات المرور وحماية بيانات المتصفح مبني على تقنيات .NET الحديثة.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
-![Framework](https://img.shields.io/badge/.NET-9.0-purple.svg)
+![الترخيص](https://img.shields.io/badge/license-MIT-blue.svg)
+![المنصة](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
+![الإطار](https://img.shields.io/badge/.NET-9.0-purple.svg)
 
-## 🌟 Key Features
+## 🌟 الميزات الرئيسية
 
-- **Secure Password Management**
-  - AES-GCM encryption for maximum security
-  - PBKDF2 key derivation with 390,000 iterations
-  - Zero-knowledge architecture
-  - Secure password generation
+- **إدارة كلمات المرور بشكل آمن**
+  - تشفير AES-GCM لأقصى درجات الأمان
+  - اشتقاق المفاتيح PBKDF2 مع 390,000 تكرار
+  - بنية بدون معرفة
+  - توليد كلمات مرور آمنة
 
-- **Browser Data Protection**
-  - Automated browser profile backup
-  - Encrypted storage of sensitive browser data
-  - Secure restore functionality
-  - Multi-browser support
+- **حماية بيانات المتصفح**
+  - نسخ احتياطي تلقائي لملف تعريف المتصفح
+  - تخزين مشفر لبيانات المتصفح الحساسة
+  - وظيفة استعادة آمنة
+  - دعم متعدد المتصفحات
 
-- **Modern WPF Interface**
-  - Clean, intuitive design
-  - Password strength assessment
-  - Quick copy functionality
-  - Category organization
-  - Secure note storage
+- **واجهة WPF حديثة**
+  - تصميم نظيف وبديهي
+  - تقييم قوة كلمة المرور
+  - وظيفة نسخ سريع
+  - تنظيم حسب الفئات
+  - تخزين الملاحظات بشكل آمن
 
-## 🔒 Security Features
+## 🔒 ميزات الأمان
 
-- **Advanced Encryption**
-  - AES-256-GCM authenticated encryption
-  - 96-bit nonces for perfect forward secrecy
-  - 128-bit authentication tags
-  - Cryptographically secure random number generation
+- **تشفير متقدم**
+  - تشفير AES-256-GCM مع المصادقة
+  - أرقام عشوائية بطول 96 بت للسرية التامة للأمام
+  - علامات مصادقة بطول 128 بت
+  - توليد أرقام عشوائية آمن من الناحية التشفيرية
 
-- **Zero-Knowledge Design**
-  - Master password never stored
-  - No cloud integration - full local control
-  - Memory protection for sensitive data
-  - Automatic vault locking
+- **تصميم بدون معرفة**
+  - كلمة المرور الرئيسية لا يتم تخزينها أبدًا
+  - لا توجد مزامنة سحابية - تحكم كامل محليًا
+  - حماية الذاكرة للبيانات الحساسة
+  - قفل تلقائي للخزنة
 
-## 🚀 Getting Started
+## 🚀 البدء
 
-### System Requirements
+### متطلبات النظام
 
-- **Operating System**: Windows 7 or later (Windows 10/11 recommended)
-- **Framework**: .NET 9.0 Runtime
-- **Privileges**: Administrator rights required
+- **نظام التشغيل**: Windows 7 أو أحدث (يُوصى بـ Windows 10/11)
+- **الإطار**: .NET 9.0 Runtime
+- **الصلاحيات**: مطلوبة حقوق المسؤول
 
-### Installation & Running
+### التثبيت والتشغيل
 
-SAFP requires administrator privileges to perform secure browser data operations. When you launch the application, Windows will display a User Account Control (UAC) prompt requesting administrator access. This is necessary to:
+يتطلب SAFP صلاحيات المسؤول لإجراء عمليات آمنة على بيانات المتصفح. عند تشغيل التطبيق، سيعرض Windows مطالبة User Account Control (UAC) لطلب وصول المسؤول. هذا ضروري لـ:
 
-- Schedule deletion of locked browser files on system reboot
-- Perform secure file operations on browser data
-- Ensure complete cleanup of sensitive data
+- جدولة حذف ملفات المتصفح المقفلة عند إعادة تشغيل النظام
+- إجراء عمليات ملفات آمنة على بيانات المتصفح
+- ضمان التنظيف الكامل للبيانات الحساسة
 
-Simply approve the UAC prompt when launching SAFP.exe to proceed.
+ما عليك سوى الموافقة على مطالبة UAC عند تشغيل SAFP.exe للمتابعة.
 
-## 🛠️ Technical Stack
+## 🛠️ المكدس التقني
 
-- **Framework**: .NET 9.0
-- **UI**: Windows Presentation Foundation (WPF)
-- **Architecture**: MVVM Pattern
-- **Security**: AES-GCM, PBKDF2
-- **Password Analysis**: zxcvbn-cs
+- **الإطار**: .NET 9.0
+- **الواجهة**: Windows Presentation Foundation (WPF)
+- **البنية**: نمط MVVM
+- **الأمان**: AES-GCM, PBKDF2
+- **تحليل كلمة المرور**: zxcvbn-cs
 
-## 🔍 Core Components
+## 🔍 المكونات الأساسية
 
 - **SAFP.Core**
-  - Encryption/decryption logic
-  - Password generation
-  - Browser file management
-  - Security utilities
+  - منطق التشفير/فك التشفير
+  - توليد كلمات المرور
+  - إدارة ملفات المتصفح
+  - أدوات الأمان
 
 - **SAFP.WPF**
-  - User interface
-  - MVVM implementation
-  - Dialog management
-  - Clipboard handling
+  - واجهة المستخدم
+  - تطبيق MVVM
+  - إدارة مربعات الحوار
+  - معالجة الحافظة
 
-## 📝 License
+## 📝 الترخيص
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+هذا المشروع مرخص بموجب ترخيص MIT - انظر ملف [LICENSE](LICENSE) للتفاصيل.

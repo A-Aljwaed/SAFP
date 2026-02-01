@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SAFP.Wpf"
         mc:Ignorable="d"
-        Title="SAFP - Secure Login" Height="350" Width="450" MinHeight="300" MinWidth="400"
+        Title="SAFP - تسجيل الدخول الآمن" Height="350" Width="450" MinHeight="300" MinWidth="400"
         WindowStartupLocation="CenterScreen"
         Background="#F8F9FA"
         ResizeMode="NoResize"
         UseLayoutRounding="True"
-        TextOptions.TextFormattingMode="Display">
+        TextOptions.TextFormattingMode="Display"
+        FlowDirection="RightToLeft">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>
@@ -23,7 +24,7 @@
         <PasswordBox x:Name="PasswordBox" Grid.Row="1" MinWidth="250"
                      HorizontalAlignment="Center" VerticalAlignment="Center"
                      FontSize="14" Padding="5" Margin="0,0,0,15"
-                     ToolTip="Enter your master password"
+                     ToolTip="أدخل كلمة المرور الرئيسية الخاصة بك"
                      PasswordChanged="PasswordBox_PasswordChanged"
                      KeyDown="PasswordBox_KeyDown"/>
                      <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,5">
@@ -31,7 +32,7 @@
                     Command="{Binding SubmitCommand}"
                     MinWidth="120" Padding="10,5" FontSize="14" FontWeight="SemiBold"
                     Margin="5" IsDefault="True"/>
-             <Button Content="Cancel Setup"
+             <Button Content="إلغاء الإعداد"
                      Command="{Binding CancelSetupCommand}"
                      Visibility="{Binding CancelButtonVisibility}"
                      MinWidth="100" Padding="10,5" FontSize="14"

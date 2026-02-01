@@ -60,7 +60,7 @@ namespace SAFP.Wpf
             catch (Exception ex)
             {
                 Debug.WriteLine($"[MainWindow] ERROR during construction: {ex.Message}");
-                MessageBox.Show($"Failed to initialize main window: {ex.Message}", "Initialization Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"فشل تهيئة النافذة الرئيسية: {ex.Message}", "خطأ في التهيئة", MessageBoxButton.OK, MessageBoxImage.Error);
                 throw; // Re-throw to let App.xaml.cs handle it
             }
         }
@@ -107,7 +107,7 @@ namespace SAFP.Wpf
             catch (Exception ex)
             {
                 Debug.WriteLine($"[MainWindow] Error during Window_Closing: {ex}");
-                MessageBox.Show($"Error during window closing: {ex.Message}", "Closing Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"خطأ أثناء إغلاق النافذة: {ex.Message}", "خطأ في الإغلاق", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
              Debug.WriteLine($"[MainWindow] Window_Closing event finished. CancelEventArgs.Cancel = {e.Cancel}");
         }
@@ -126,7 +126,7 @@ namespace SAFP.Wpf
             catch (Exception ex)
             {
                 Debug.WriteLine($"[MainWindow] Error during async exit cleanup: {ex}");
-                MessageBox.Show($"An error occurred during application exit: {ex.Message}", "Exit Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"حدث خطأ أثناء إنهاء التطبيق: {ex.Message}", "خطأ في الإنهاء", MessageBoxButton.OK, MessageBoxImage.Warning);
                 
                 // Still try to close even if cleanup failed
                 Application.Current.Dispatcher.Invoke(() => this.Close());
@@ -148,8 +148,8 @@ namespace SAFP.Wpf
         // *** WICHTIG: Initialisiere die Collection hier ***
         private ObservableCollection<PasswordEntry> _passwordEntries = new ObservableCollection<PasswordEntry>();
         private PasswordEntry? _selectedEntry;
-        private string _statusMessage = "Vault unlocked.";
-        private string _vaultStatus = "Unlocked";
+        private string _statusMessage = "تم فتح الخزنة.";
+        private string _vaultStatus = "مفتوحة";
         private bool _isBusy = false;
         private DispatcherTimer _clipboardTimer;
         private string _clipboardTimerMessage = "";
@@ -288,15 +288,15 @@ namespace SAFP.Wpf
 
             bool? dialogResult = null;
             try { dialogResult = dialog.ShowDialog(); }
-            catch(Exception ex) { Debug.WriteLine($"[MainViewModel] Exception showing Add dialog: {ex}"); StatusMessage = $"Error opening add dialog: {ex.Message}"; return; }
+            catch(Exception ex) { Debug.WriteLine($"[MainViewModel] Exception showing Add dialog: {ex}"); StatusMessage = $"خطأ في فتح نافذة الإضافة: {ex.Message}"; return; }
 
             if (dialogResult == true)
             {
                  string? newId = dialogViewModel.EntryId; PasswordEntry savedEntry = dialogViewModel.Entry;
                  if (!string.IsNullOrEmpty(newId) && savedEntry != null)
-                 { Debug.WriteLine($"[MainViewModel] Add dialog succeeded. New ID: {newId}, Service: {savedEntry.Service}"); _passwordData[newId] = savedEntry; RefreshEntriesCollection(); SelectedEntry = PasswordEntries.FirstOrDefault(e => e.Id == newId); StatusMessage = $"Entry '{savedEntry.Service}' added."; }
-                 else { StatusMessage = "Add operation reported success, but ID or entry data was missing."; Debug.WriteLine("[MainViewModel] Add dialog success but ID/Entry missing from dialog VM."); RefreshEntriesCollection(); }
-            } else { StatusMessage = "Add operation cancelled."; Debug.WriteLine("[MainViewModel] Add dialog cancelled."); }
+                 { Debug.WriteLine($"[MainViewModel] Add dialog succeeded. New ID: {newId}, Service: {savedEntry.Service}"); _passwordData[newId] = savedEntry; RefreshEntriesCollection(); SelectedEntry = PasswordEntries.FirstOrDefault(e => e.Id == newId); StatusMessage = $"تمت إضافة الإدخال '{savedEntry.Service}'."; }
+                 else { StatusMessage = "عملية الإضافة أفادت بالنجاح، لكن المعرف أو بيانات الإدخال كانت مفقودة."; Debug.WriteLine("[MainViewModel] Add dialog success but ID/Entry missing from dialog VM."); RefreshEntriesCollection(); }
+            } else { StatusMessage = "تم إلغاء عملية الإضافة."; Debug.WriteLine("[MainViewModel] Add dialog cancelled."); }
         }
 
         // *** Methode erwartet jetzt PasswordEntry? ***
@@ -318,14 +318,14 @@ namespace SAFP.Wpf
                  dialogResult = dialog.ShowDialog(); // Ohne Dispatcher
                  Debug.WriteLine($"[MainViewModel] Edit dialog closed with result: {dialogResult}");
             }
-            catch(Exception ex) { Debug.WriteLine($"[MainViewModel] Exception showing Edit dialog: {ex}"); StatusMessage = $"Error opening edit dialog: {ex.Message}"; return; }
+            catch(Exception ex) { Debug.WriteLine($"[MainViewModel] Exception showing Edit dialog: {ex}"); StatusMessage = $"خطأ في فتح نافذة التعديل: {ex.Message}"; return; }
 
             if (dialogResult == true)
             {
                  if (entryNonNull.Id != null && _passwordData.ContainsKey(entryNonNull.Id))
-                 { Debug.WriteLine($"[MainViewModel] Edit dialog succeeded for ID: {entryNonNull.Id}, Service: {entryCopy.Service}"); _passwordData[entryNonNull.Id] = entryCopy; RefreshEntriesCollection(); SelectedEntry = PasswordEntries.FirstOrDefault(e => e.Id == entryNonNull.Id); StatusMessage = $"Entry '{entryCopy.Service}' updated."; }
-                 else { StatusMessage = "Edit failed: Original entry not found after dialog close."; Debug.WriteLine($"[MainViewModel] Edit dialog success but original ID {entryNonNull.Id} not found in dictionary."); RefreshEntriesCollection(); }
-            } else { StatusMessage = "Edit operation cancelled."; Debug.WriteLine("[MainViewModel] Edit dialog cancelled."); }
+                 { Debug.WriteLine($"[MainViewModel] Edit dialog succeeded for ID: {entryNonNull.Id}, Service: {entryCopy.Service}"); _passwordData[entryNonNull.Id] = entryCopy; RefreshEntriesCollection(); SelectedEntry = PasswordEntries.FirstOrDefault(e => e.Id == entryNonNull.Id); StatusMessage = $"تم تحديث الإدخال '{entryCopy.Service}'."; }
+                 else { StatusMessage = "فشل التعديل: لم يتم العثور على الإدخال الأصلي بعد إغلاق النافذة."; Debug.WriteLine($"[MainViewModel] Edit dialog success but original ID {entryNonNull.Id} not found in dictionary."); RefreshEntriesCollection(); }
+            } else { StatusMessage = "تم إلغاء عملية التعديل."; Debug.WriteLine("[MainViewModel] Edit dialog cancelled."); }
         }
 
         // *** Methode erwartet jetzt PasswordEntry? ***
@@ -335,19 +335,19 @@ namespace SAFP.Wpf
              if (!CanExecuteOnSelectedEntry(entry)) { Debug.WriteLine($"[MainViewModel] DeleteEntryAsync: Cannot execute."); return; }
              PasswordEntry entryNonNull = entry!;
 
-             var result = MessageBox.Show($"Are you sure you want to delete the entry for '{entryNonNull.Service}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+             var result = MessageBox.Show($"هل أنت متأكد من رغبتك في حذف الإدخال '{entryNonNull.Service}'؟", "تأكيد الحذف", MessageBoxButton.YesNo, MessageBoxImage.Warning);
              if (result == MessageBoxResult.Yes)
              {
-                 IsBusy = true; StatusMessage = $"Deleting '{entryNonNull.Service}'..."; bool removedFromDict = false;
+                 IsBusy = true; StatusMessage = $"جارٍ حذف '{entryNonNull.Service}'..."; bool removedFromDict = false;
                  try
                  {
                      if (_passwordData.Remove(entryNonNull.Id!))
-                     { removedFromDict = true; Debug.WriteLine($"[MainViewModel] Removed entry {entryNonNull.Id} from dictionary."); await _vaultLogic.SaveDataAsync(_passwordData, _masterPassword); Debug.WriteLine($"[MainViewModel] Saved data after deletion."); RefreshEntriesCollection(); StatusMessage = $"Entry '{entryNonNull.Service}' deleted."; }
+                     { removedFromDict = true; Debug.WriteLine($"[MainViewModel] Removed entry {entryNonNull.Id} from dictionary."); await _vaultLogic.SaveDataAsync(_passwordData, _masterPassword); Debug.WriteLine($"[MainViewModel] Saved data after deletion."); RefreshEntriesCollection(); StatusMessage = $"تم حذف الإدخال '{entryNonNull.Service}'."; }
                      else
-                     { StatusMessage = "Delete failed: Entry not found in data."; Debug.WriteLine($"[MainViewModel] Delete failed, entry {entryNonNull.Id} not found in dictionary."); RefreshEntriesCollection(); }
+                     { StatusMessage = "فشل الحذف: لم يتم العثور على الإدخال في البيانات."; Debug.WriteLine($"[MainViewModel] Delete failed, entry {entryNonNull.Id} not found in dictionary."); RefreshEntriesCollection(); }
                  }
                  catch (Exception ex)
-                 { StatusMessage = $"Error deleting entry: {ex.Message}"; Debug.WriteLine($"[MainViewModel] Exception during Delete/Save: {ex}"); MessageBox.Show($"Failed to delete entry: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); if(removedFromDict && entryNonNull.Id != null) { _passwordData[entryNonNull.Id] = entryNonNull; } RefreshEntriesCollection(); }
+                 { StatusMessage = $"خطأ في حذف الإدخال: {ex.Message}"; Debug.WriteLine($"[MainViewModel] Exception during Delete/Save: {ex}"); MessageBox.Show($"فشل حذف الإدخال: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error); if(removedFromDict && entryNonNull.Id != null) { _passwordData[entryNonNull.Id] = entryNonNull; } RefreshEntriesCollection(); }
                  finally { IsBusy = false; }
              } else { Debug.WriteLine("[MainViewModel] Delete cancelled by user."); }
         }
@@ -363,7 +363,7 @@ namespace SAFP.Wpf
             Debug.WriteLine($"[MainViewModel] Attempting to copy username: '{usernameToCopy ?? "<null>"}' for Service '{entryNonNull.Service}'");
 
             if (string.IsNullOrEmpty(usernameToCopy))
-            { StatusMessage = $"Entry '{entryNonNull.Service}' has no username to copy."; Debug.WriteLine("[MainViewModel] CopyUsername: Username is null or empty."); return; }
+            { StatusMessage = $"الإدخال '{entryNonNull.Service}' ليس لديه اسم مستخدم لنسخه."; Debug.WriteLine("[MainViewModel] CopyUsername: Username is null or empty."); return; }
             try
             {
                 Debug.WriteLine($"[MainViewModel] Calling Clipboard.SetText for username...");
@@ -374,10 +374,10 @@ namespace SAFP.Wpf
                 // try { clipboardText = Clipboard.GetText(); } catch {}
                 // if (clipboardText == usernameToCopy) { StatusMessage = $"Username for '{entryNonNull.Service}' copied."; }
                 // else { StatusMessage = $"Username copy verification failed for '{entryNonNull.Service}'."; }
-                StatusMessage = $"Username for '{entryNonNull.Service}' copied."; // Assume success if no exception
+                StatusMessage = $"تم نسخ اسم المستخدم لـ '{entryNonNull.Service}'."; // Assume success if no exception
             }
             catch (Exception ex)
-            { StatusMessage = $"Error copying username: {ex.Message}"; Debug.WriteLine($"[MainViewModel] Exception during CopyUsername: {ex}"); MessageBox.Show($"Could not copy username to clipboard: {ex.Message}", "Clipboard Error", MessageBoxButton.OK, MessageBoxImage.Warning); }
+            { StatusMessage = $"خطأ في نسخ اسم المستخدم: {ex.Message}"; Debug.WriteLine($"[MainViewModel] Exception during CopyUsername: {ex}"); MessageBox.Show($"تعذر نسخ اسم المستخدم إلى الحافظة: {ex.Message}", "خطأ في الحافظة", MessageBoxButton.OK, MessageBoxImage.Warning); }
         }
 
         // *** Methode erwartet jetzt PasswordEntry? ***
@@ -391,23 +391,23 @@ namespace SAFP.Wpf
              Debug.WriteLine($"[MainViewModel] Attempting to copy password (length: {passwordToCopy?.Length ?? 0}) for service '{entryNonNull.Service}'");
 
              if (string.IsNullOrEmpty(passwordToCopy))
-             { StatusMessage = $"Entry '{entryNonNull.Service}' has no password stored."; Debug.WriteLine("[MainViewModel] CopyPassword: Password is null or empty."); return; }
+             { StatusMessage = $"الإدخال '{entryNonNull.Service}' ليس لديه كلمة مرور مخزنة."; Debug.WriteLine("[MainViewModel] CopyPassword: Password is null or empty."); return; }
              try
              {
                  Debug.WriteLine($"[MainViewModel] Calling Clipboard.SetText for password...");
                  Clipboard.SetText(passwordToCopy);
                  Debug.WriteLine("[MainViewModel] Clipboard.SetText call finished for password.");
-                 StatusMessage = $"Password for '{entryNonNull.Service}' copied.";
+                 StatusMessage = $"تم نسخ كلمة المرور لـ '{entryNonNull.Service}'.";
                  StartClipboardTimer();
              }
              catch (Exception ex)
-             { StatusMessage = $"Error copying password: {ex.Message}"; Debug.WriteLine($"[MainViewModel] Exception during CopyPassword: {ex}"); MessageBox.Show($"Could not copy password to clipboard: {ex.Message}", "Clipboard Error", MessageBoxButton.OK, MessageBoxImage.Warning); }
+             { StatusMessage = $"خطأ في نسخ كلمة المرور: {ex.Message}"; Debug.WriteLine($"[MainViewModel] Exception during CopyPassword: {ex}"); MessageBox.Show($"تعذر نسخ كلمة المرور إلى الحافظة: {ex.Message}", "خطأ في الحافظة", MessageBoxButton.OK, MessageBoxImage.Warning); }
         }
 
         private void StartClipboardTimer()
         {
             _remainingSeconds = 90;
-            ClipboardTimerMessage = $"🔒 Password will be cleared from clipboard in {_remainingSeconds}s";
+            ClipboardTimerMessage = $"🔒 سيتم مسح كلمة المرور من الحافظة خلال {_remainingSeconds} ثانية";
             _clipboardTimer.Start();
             Debug.WriteLine("[MainViewModel] Clipboard timer started - 90 seconds until auto-clear.");
         }
@@ -423,7 +423,7 @@ namespace SAFP.Wpf
                 {
                     Clipboard.Clear();
                     ClipboardTimerMessage = "";
-                    StatusMessage = "Clipboard cleared for security.";
+                    StatusMessage = "تم مسح الحافظة للأمان.";
                     Debug.WriteLine("[MainViewModel] Clipboard automatically cleared after 90 seconds.");
                 }
                 catch (Exception ex)
@@ -433,7 +433,7 @@ namespace SAFP.Wpf
             }
             else
             {
-                ClipboardTimerMessage = $"🔒 Password will be cleared from clipboard in {_remainingSeconds}s";
+                ClipboardTimerMessage = $"🔒 سيتم مسح كلمة المرور من الحافظة خلال {_remainingSeconds} ثانية";
             }
         }
 
@@ -446,7 +446,7 @@ namespace SAFP.Wpf
         private void LockVault(object? parameter = null)
         {
             Debug.WriteLine("[MainViewModel] LockVault command executed."); if (IsBusy) return;
-            StatusMessage = "Locking vault..."; VaultStatus = "Locked"; _masterPassword = string.Empty; _passwordData.Clear(); PasswordEntries.Clear(); SelectedEntry = null;
+            StatusMessage = "جارٍ قفل الخزنة..."; VaultStatus = "مقفلة"; _masterPassword = string.Empty; _passwordData.Clear(); PasswordEntries.Clear(); SelectedEntry = null;
             StopClipboardTimer();
             try { Clipboard.Clear(); Debug.WriteLine("[MainViewModel] Clipboard cleared on lock."); } catch (Exception ex) { Debug.WriteLine($"[MainViewModel] Error clearing clipboard on lock: {ex.Message}"); }
             Debug.WriteLine("[MainViewModel] Firing RequestLock event."); RequestLock?.Invoke(this, EventArgs.Empty);
@@ -455,19 +455,19 @@ namespace SAFP.Wpf
         private async Task BackupBrowserFilesAsync()
         {
             Debug.WriteLine("[MainViewModel] BackupBrowserFilesAsync command executed."); if (IsBusy || string.IsNullOrEmpty(_masterPassword)) return;
-            var promptResult = MessageBox.Show("IMPORTANT: Please ensure ALL web browsers (...) are completely closed before proceeding.\n\n...Continue with the browser file backup?", "Close Browsers Before Backup", MessageBoxButton.YesNo, MessageBoxImage.Warning); if (promptResult != MessageBoxResult.Yes) { StatusMessage = "Browser file backup cancelled by user."; return; } IsBusy = true; StatusMessage = "Backing up browser files..."; try { var (success, messages) = await _browserManager.BackupBrowserFilesAsync(_masterPassword); string resultMessage = string.Join("\n", messages); StatusMessage = success ? $"Browser Backup Finished. {messages.FirstOrDefault()}" : "Browser Backup Finished with warnings/errors."; MessageBox.Show(resultMessage, success ? "Backup Result" : "Backup Result (with issues)", MessageBoxButton.OK, success ? MessageBoxImage.Information : MessageBoxImage.Warning); } catch (Exception ex) { StatusMessage = $"Browser backup failed: {ex.Message}"; MessageBox.Show($"An unexpected error occurred during browser backup: {ex.Message}", "Backup Error", MessageBoxButton.OK, MessageBoxImage.Error); } finally { IsBusy = false; }
+            var promptResult = MessageBox.Show("مهم: يرجى التأكد من إغلاق جميع متصفحات الويب (...) بشكل كامل قبل المتابعة.\n\n...المتابعة مع النسخ الاحتياطي لملفات المتصفح؟", "أغلق المتصفحات قبل النسخ الاحتياطي", MessageBoxButton.YesNo, MessageBoxImage.Warning); if (promptResult != MessageBoxResult.Yes) { StatusMessage = "تم إلغاء النسخ الاحتياطي لملفات المتصفح من قبل المستخدم."; return; } IsBusy = true; StatusMessage = "جارٍ النسخ الاحتياطي لملفات المتصفح..."; try { var (success, messages) = await _browserManager.BackupBrowserFilesAsync(_masterPassword); string resultMessage = string.Join("\n", messages); StatusMessage = success ? $"انتهى النسخ الاحتياطي للمتصفح. {messages.FirstOrDefault()}" : "انتهى النسخ الاحتياطي للمتصفح مع تحذيرات/أخطاء."; MessageBox.Show(resultMessage, success ? "نتيجة النسخ الاحتياطي" : "نتيجة النسخ الاحتياطي (مع مشاكل)", MessageBoxButton.OK, success ? MessageBoxImage.Information : MessageBoxImage.Warning); } catch (Exception ex) { StatusMessage = $"فشل النسخ الاحتياطي للمتصفح: {ex.Message}"; MessageBox.Show($"حدث خطأ غير متوقع أثناء النسخ الاحتياطي للمتصفح: {ex.Message}", "خطأ في النسخ الاحتياطي", MessageBoxButton.OK, MessageBoxImage.Error); } finally { IsBusy = false; }
         }
 
         private async Task RestoreBrowserFilesAsync()
         {
             Debug.WriteLine("[MainViewModel] RestoreBrowserFilesAsync command executed."); if (IsBusy || string.IsNullOrEmpty(_masterPassword)) return;
-             var promptResult = MessageBox.Show("IMPORTANT: Please ensure ALL web browsers (...) are completely closed before proceeding.\n\n...Continue with the browser file restore?", "Close Browsers Before Restore", MessageBoxButton.YesNo, MessageBoxImage.Warning); if (promptResult != MessageBoxResult.Yes) { StatusMessage = "Browser file restore cancelled by user."; return; } IsBusy = true; StatusMessage = "Restoring browser files from backup..."; try { var (success, messages) = await _browserManager.RestoreBrowserFilesAsync(_masterPassword); string resultMessage = string.Join("\n", messages); StatusMessage = success ? $"Browser Restore Finished. {messages.FirstOrDefault()}" : "Browser Restore Finished with warnings/errors."; MessageBox.Show(resultMessage, success ? "Restore Result" : "Restore Result (with issues)", MessageBoxButton.OK, success ? MessageBoxImage.Information : MessageBoxImage.Warning); } catch (Exception ex) { StatusMessage = $"Browser restore failed: {ex.Message}"; MessageBox.Show($"An unexpected error occurred during browser restore: {ex.Message}", "Restore Error", MessageBoxButton.OK, MessageBoxImage.Error); } finally { IsBusy = false; }
+             var promptResult = MessageBox.Show("مهم: يرجى التأكد من إغلاق جميع متصفحات الويب (...) بشكل كامل قبل المتابعة.\n\n...المتابعة مع استعادة ملفات المتصفح؟", "أغلق المتصفحات قبل الاستعادة", MessageBoxButton.YesNo, MessageBoxImage.Warning); if (promptResult != MessageBoxResult.Yes) { StatusMessage = "تم إلغاء استعادة ملفات المتصفح من قبل المستخدم."; return; } IsBusy = true; StatusMessage = "جارٍ استعادة ملفات المتصفح من النسخة الاحتياطية..."; try { var (success, messages) = await _browserManager.RestoreBrowserFilesAsync(_masterPassword); string resultMessage = string.Join("\n", messages); StatusMessage = success ? $"انتهت استعادة المتصفح. {messages.FirstOrDefault()}" : "انتهت استعادة المتصفح مع تحذيرات/أخطاء."; MessageBox.Show(resultMessage, success ? "نتيجة الاستعادة" : "نتيجة الاستعادة (مع مشاكل)", MessageBoxButton.OK, success ? MessageBoxImage.Information : MessageBoxImage.Warning); } catch (Exception ex) { StatusMessage = $"فشلت استعادة المتصفح: {ex.Message}"; MessageBox.Show($"حدث خطأ غير متوقع أثناء استعادة المتصفح: {ex.Message}", "خطأ في الاستعادة", MessageBoxButton.OK, MessageBoxImage.Error); } finally { IsBusy = false; }
         }
 
         public bool CanExitApplication()
         {
              Debug.WriteLine("[MainViewModel] CanExitApplication called.");
-             var result = MessageBox.Show("Lock vault and exit SAFP?", "Confirm Exit", MessageBoxButton.YesNo, MessageBoxImage.Question);
+             var result = MessageBox.Show("قفل الخزنة والخروج من SAFP؟", "تأكيد الخروج", MessageBoxButton.YesNo, MessageBoxImage.Question);
              if (result == MessageBoxResult.Yes)
              {
                  Debug.WriteLine("[MainViewModel] User confirmed exit.");

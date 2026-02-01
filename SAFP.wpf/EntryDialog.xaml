@@ -8,26 +8,27 @@
         Title="{Binding WindowTitle}" Height="520" Width="480"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
+        UseLayoutRounding="True" TextOptions.TextFormattingMode="Display"
+        FlowDirection="RightToLeft">
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>    <RowDefinition Height="Auto"/> <RowDefinition Height="Auto"/> </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    </Grid.ColumnDefinitions>
 
-        <Label Grid.Row="0" Grid.Column="0" Content="_Category:" Target="{Binding ElementName=CategoryComboBox}" VerticalAlignment="Center"/>
+        <Label Grid.Row="0" Grid.Column="0" Content="_الفئة:" Target="{Binding ElementName=CategoryComboBox}" VerticalAlignment="Center"/>
         <ComboBox Grid.Row="0" Grid.Column="1" x:Name="CategoryComboBox" Margin="5" Padding="3"
                   ItemsSource="{Binding Categories}" SelectedItem="{Binding Entry.Category}"/>
 
-        <Label Grid.Row="1" Grid.Column="0" Content="_Service/Website:" Target="{Binding ElementName=ServiceTextBox}" VerticalAlignment="Center"/>
+        <Label Grid.Row="1" Grid.Column="0" Content="_الخدمة/الموقع:" Target="{Binding ElementName=ServiceTextBox}" VerticalAlignment="Center"/>
         <TextBox Grid.Row="1" Grid.Column="1" x:Name="ServiceTextBox" Margin="5" Padding="3"
                  Text="{Binding Entry.Service, UpdateSourceTrigger=PropertyChanged}"/>
 
-        <Label Grid.Row="2" Grid.Column="0" Content="_Username/Login:" Target="{Binding ElementName=UsernameTextBox}" VerticalAlignment="Center"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="_اسم المستخدم/تسجيل الدخول:" Target="{Binding ElementName=UsernameTextBox}" VerticalAlignment="Center"/>
         <TextBox Grid.Row="2" Grid.Column="1" x:Name="UsernameTextBox" Margin="5" Padding="3"
                  Text="{Binding Entry.Username, UpdateSourceTrigger=PropertyChanged}"/>
 
-        <Label Grid.Row="3" Grid.Column="0" Content="_Password:" Target="{Binding ElementName=PasswordBox}" VerticalAlignment="Center"/>
+        <Label Grid.Row="3" Grid.Column="0" Content="_كلمة المرور:" Target="{Binding ElementName=PasswordBox}" VerticalAlignment="Center"/>
         <Grid Grid.Row="3" Grid.Column="1" Margin="5,5,5,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -35,29 +36,29 @@
             </Grid.ColumnDefinitions>
             <PasswordBox Grid.Column="0" x:Name="PasswordEntryBox" Padding="3" VerticalAlignment="Center"
                          PasswordChanged="PasswordEntryBox_PasswordChanged"/>
-                         <Button Grid.Column="1" x:Name="ShowHideButton" Content="Show" Margin="5,0,0,0" Padding="5,2"
+                         <Button Grid.Column="1" x:Name="ShowHideButton" Content="عرض" Margin="5,0,0,0" Padding="5,2"
                     Click="ShowHideButton_Click"/>
         </Grid>
 
-        <GroupBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Header="Generate Password" Margin="0,10,0,5" Padding="5">
+        <GroupBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Header="توليد كلمة المرور" Margin="0,10,0,5" Padding="5">
             <StackPanel Orientation="Horizontal">
-                <Label Content="Length:" VerticalAlignment="Center"/>
+                <Label Content="الطول:" VerticalAlignment="Center"/>
                 <ComboBox x:Name="LengthComboBox" Width="60" VerticalAlignment="Center" Margin="5,0" SelectedIndex="10"
                           ItemsSource="{Binding PasswordLengths}" SelectedItem="{Binding SelectedPasswordLength}"/>
-                <Button Content="Generate" Command="{Binding GeneratePasswordCommand}" Margin="5,0"/>
-                <Button Content="Copy" Command="{Binding CopyGeneratedPasswordCommand}" Margin="5,0"
+                <Button Content="توليد" Command="{Binding GeneratePasswordCommand}" Margin="5,0"/>
+                <Button Content="نسخ" Command="{Binding CopyGeneratedPasswordCommand}" Margin="5,0"
                         Visibility="{Binding CopyButtonVisibility}"/>
                         </StackPanel>
         </GroupBox>
 
-        <Label Grid.Row="5" Grid.Column="0" Content="N_otes:" Target="{Binding ElementName=NotesTextBox}" VerticalAlignment="Top" Margin="0,5,0,0"/>
+        <Label Grid.Row="5" Grid.Column="0" Content="م_لاحظات:" Target="{Binding ElementName=NotesTextBox}" VerticalAlignment="Top" Margin="0,5,0,0"/>
         <TextBox Grid.Row="5" Grid.Column="1" x:Name="NotesTextBox" Margin="5" Padding="3" MinHeight="80" MaxHeight="150"
                  Text="{Binding Entry.Notes, UpdateSourceTrigger=PropertyChanged}"
                  AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
 
         <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,5">
-            <Button Content="_Save" Command="{Binding SaveCommand}" IsDefault="True" MinWidth="80" Margin="5"/>
-            <Button Content="_Cancel" Command="{Binding CancelCommand}" IsCancel="True" MinWidth="80" Margin="5"/>
+            <Button Content="_حفظ" Command="{Binding SaveCommand}" IsDefault="True" MinWidth="80" Margin="5"/>
+            <Button Content="_إلغاء" Command="{Binding CancelCommand}" IsCancel="True" MinWidth="80" Margin="5"/>
         </StackPanel>
 
         <TextBlock Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding StatusMessage}" Foreground="Red" Margin="0,5,0,0" TextWrapping="Wrap"/>

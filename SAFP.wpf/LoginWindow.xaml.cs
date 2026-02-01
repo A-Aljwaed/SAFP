@@ -81,9 +81,9 @@ namespace SAFP.Wpf
         private bool _isBusy = false;
 
         // Properties for UI Binding
-        public string WindowTitle => _isInitialSetup ? "SAFP - Create Master Password" : "SAFP Login";
-        public string PromptText => _isInitialSetup ? "Create Your Master Password" : "Enter Master Password";
-        public string ActionButtonText => _isInitialSetup ? "Create Vault" : "Unlock Vault";
+        public string WindowTitle => _isInitialSetup ? "SAFP - إنشاء كلمة المرور الرئيسية" : "تسجيل الدخول إلى SAFP";
+        public string PromptText => _isInitialSetup ? "أنشئ كلمة المرور الرئيسية الخاصة بك" : "أدخل كلمة المرور الرئيسية";
+        public string ActionButtonText => _isInitialSetup ? "إنشاء الخزنة" : "فتح الخزنة";
         public Visibility CancelButtonVisibility => _isInitialSetup ? Visibility.Visible : Visibility.Collapsed; // Show Cancel only during setup
 
         public event EventHandler<string>? LoginSuccess; // Event passes master password string on success
@@ -103,7 +103,7 @@ namespace SAFP.Wpf
 
             if (_isInitialSetup)
             {
-                StatusMessage = "Create a strong master password.";
+                StatusMessage = "أنشئ كلمة مرور رئيسية قوية.";
             }
         }
 
@@ -144,12 +144,12 @@ namespace SAFP.Wpf
         {
             if (SecurePassword == null || SecurePassword.Length == 0)
             {
-                StatusMessage = "Password cannot be empty.";
+                StatusMessage = "كلمة المرور لا يمكن أن تكون فارغة.";
                 return;
             }
 
             IsBusy = true;
-            StatusMessage = _isInitialSetup ? "Checking & Creating..." : "Unlocking..."; // Updated setup message
+            StatusMessage = _isInitialSetup ? "جارٍ التحقق والإنشاء..." : "جارٍ الفتح..."; // Updated setup message
 
             // Convert SecureString to plain string for logic (handle with care)
             string password = SecureStringToString(SecurePassword);
@@ -167,9 +167,9 @@ namespace SAFP.Wpf
                     {
                         string suggestions = string.Join("\n- ", strength.Feedback?.Suggestions ?? new List<string>());
                         string warning = strength.Feedback?.Warning ?? "";
-                        StatusMessage = $"Password Score: {strength.Score}/4 (Too Weak)\n" +
-                                        (!string.IsNullOrEmpty(warning) ? $"Warning: {warning}\n" : "") +
-                                        (!string.IsNullOrEmpty(suggestions) ? $"Suggestions:\n- {suggestions}" : "");
+                        StatusMessage = $"درجة كلمة المرور: {strength.Score}/4 (ضعيفة جدًا)\n" +
+                                        (!string.IsNullOrEmpty(warning) ? $"تحذير: {warning}\n" : "") +
+                                        (!string.IsNullOrEmpty(suggestions) ? $"اقتراحات:\n- {suggestions}" : "");
                         password = string.Empty; // Clear weak password
                         IsBusy = false;
                         return; // Stay on setup window
@@ -178,7 +178,7 @@ namespace SAFP.Wpf
                 catch (Exception ex)
                 {
                     // Handle case where Zxcvbn might fail (e.g., library not found)
-                    StatusMessage = $"Strength check failed: {ex.Message}. Cannot proceed.";
+                    StatusMessage = $"فشل التحقق من القوة: {ex.Message}. لا يمكن المتابعة.";
                     Console.WriteLine($"Zxcvbn error: {ex}"); // Log full error
                     password = string.Empty;
                     IsBusy = false;
@@ -188,14 +188,14 @@ namespace SAFP.Wpf
 
                 // 2. Ask for confirmation using a simple input dialog
                 // NOTE: Ensure InputDialog class/XAML is correctly implemented in your project.
-                var confirmDialog = new InputDialog("Confirm Master Password", "Please re-enter your master password to confirm:", isPassword: true);
+                var confirmDialog = new InputDialog("تأكيد كلمة المرور الرئيسية", "الرجاء إعادة إدخال كلمة المرور الرئيسية للتأكيد:", isPassword: true);
                 if (confirmDialog.ShowDialog() == true)
                 {
                     confirmPassword = confirmDialog.ResponseText;
                 }
                 else
                 {
-                    StatusMessage = "Password confirmation cancelled.";
+                    StatusMessage = "تم إلغاء تأكيد كلمة المرور.";
                     password = string.Empty; // Clear original password
                     IsBusy = false;
                     return; // Cancelled confirmation
@@ -203,7 +203,7 @@ namespace SAFP.Wpf
 
                 if (password != confirmPassword)
                 {
-                    StatusMessage = "Passwords do not match. Please try again.";
+                    StatusMessage = "كلمات المرور غير متطابقة. يرجى المحاولة مرة أخرى.";
                     password = string.Empty;
                     confirmPassword = string.Empty; // Clear confirmation
                     IsBusy = false;
@@ -219,32 +219,32 @@ namespace SAFP.Wpf
                 if (_isInitialSetup)
                 {
                     // Save initial empty vault (passwords matched)
-                    StatusMessage = "Creating vault file..."; // Give feedback before save
+                    StatusMessage = "جارٍ إنشاء ملف الخزنة..."; // Give feedback before save
                     await _logic.SaveDataAsync(new Dictionary<string, PasswordEntry>(), password);
-                    StatusMessage = "Vault created successfully!";
+                    StatusMessage = "تم إنشاء الخزنة بنجاح!";
                     LoginSuccess?.Invoke(this, password); // Signal success
                 }
                 else
                 {
                     // Normal Unlock Logic: Try loading data to verify password
-                    StatusMessage = "Decrypting vault..."; // Give feedback before load
+                    StatusMessage = "جارٍ فك التشفير..."; // Give feedback before load
                     var data = await _logic.LoadDataAsync<Dictionary<string, PasswordEntry>>(password);
                     // If LoadDataAsync doesn't throw, password is correct
-                    StatusMessage = "Unlock successful!";
+                    StatusMessage = "تم الفتح بنجاح!";
                     LoginSuccess?.Invoke(this, password); // Signal success
                 }
             }
             catch (DecryptionException dex) // Specific error for wrong password/corruption
             {
-                 StatusMessage = $"Error: {dex.Message}";
+                 StatusMessage = $"خطأ: {dex.Message}";
             }
             catch (FileOperationException fex)
             {
-                 StatusMessage = $"File Error: {fex.Message}";
+                 StatusMessage = $"خطأ في الملف: {fex.Message}";
             }
             catch (Exception ex) // Catch other unexpected errors
             {
-                StatusMessage = $"An unexpected error occurred: {ex.Message}";
+                StatusMessage = $"حدث خطأ غير متوقع: {ex.Message}";
                 // Log the full exception ex
                 Console.WriteLine($"UnlockOrSetup Error: {ex}");
             }
@@ -346,9 +346,9 @@ namespace SAFP.Wpf
             Grid.SetRow(ResponsePasswordBox, 1);
 
             var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 15, 0, 0) };
-            var okButton = new Button { Content = "OK", IsDefault = true, MinWidth = 70, Margin = new Thickness(0, 0, 10, 0) };
+            var okButton = new Button { Content = "موافق", IsDefault = true, MinWidth = 70, Margin = new Thickness(0, 0, 10, 0) };
             okButton.Click += OkButton_Click;
-            var cancelButton = new Button { Content = "Cancel", IsCancel = true, MinWidth = 70 };
+            var cancelButton = new Button { Content = "إلغاء", IsCancel = true, MinWidth = 70 };
             buttonPanel.Children.Add(okButton);
             buttonPanel.Children.Add(cancelButton);
             Grid.SetRow(buttonPanel, 2);

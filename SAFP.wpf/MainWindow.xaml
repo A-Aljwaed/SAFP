@@ -6,11 +6,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SAFP.Wpf"
         xmlns:core="clr-namespace:SAFP.Core;assembly=SAFP.Core" mc:Ignorable="d"
-        Title="SAFP - Secure Password Manager" Height="700" Width="950" MinHeight="500" MinWidth="750"
+        Title="SAFP - مدير كلمات المرور الآمن" Height="700" Width="950" MinHeight="500" MinWidth="750"
         WindowStartupLocation="CenterScreen"
         Background="#F8F9FA"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Display"
+        FlowDirection="RightToLeft"
         Closing="Window_Closing">
     
     <Window.Resources>
@@ -177,9 +178,9 @@
                 </Grid.ColumnDefinitions>
                 
                 <StackPanel Grid.Column="0" Orientation="Vertical">
-                    <TextBlock Text="🔐 Password Vault" FontSize="24" FontWeight="Bold" 
+                    <TextBlock Text="🔐 خزنة كلمات المرور" FontSize="24" FontWeight="Bold" 
                                Foreground="#1A202C" Margin="0,0,0,5"/>
-                    <TextBlock Text="Manage your passwords securely" FontSize="14" 
+                    <TextBlock Text="إدارة كلمات المرور الخاصة بك بشكل آمن" FontSize="14" 
                                Foreground="#718096"/>
                 </StackPanel>
                 
@@ -234,26 +235,26 @@
 
                 <DataGrid.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="📋 Copy Username" 
+                        <MenuItem Header="📋 نسخ اسم المستخدم" 
                                   Command="{Binding CopyUsernameCommand}"
                                   CommandParameter="{Binding SelectedEntry}"/>
-                        <MenuItem Header="🔑 Copy Password" 
+                        <MenuItem Header="🔑 نسخ كلمة المرور" 
                                   Command="{Binding CopyPasswordCommand}"
                                   CommandParameter="{Binding SelectedEntry}"/>
                         <Separator/>
-                        <MenuItem Header="✏️ View / Edit" 
+                        <MenuItem Header="✏️ عرض / تعديل" 
                                   Command="{Binding EditEntryCommand}"
                                   CommandParameter="{Binding SelectedEntry}"/>
-                        <MenuItem Header="🗑️ Delete Entry" 
+                        <MenuItem Header="🗑️ حذف الإدخال" 
                                   Command="{Binding DeleteEntryCommand}"
                                   CommandParameter="{Binding SelectedEntry}"/>
                     </ContextMenu>
                 </DataGrid.ContextMenu>
 
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="📁 Category" Binding="{Binding Category}" Width="1.5*" SortMemberPath="Category"/>
-                    <DataGridTextColumn Header="🌐 Service/Website" Binding="{Binding Service}" Width="3*" SortMemberPath="Service"/>
-                    <DataGridTextColumn Header="👤 Username/Login" Binding="{Binding Username}" Width="3*" SortMemberPath="Username"/>
+                    <DataGridTextColumn Header="📁 الفئة" Binding="{Binding Category}" Width="1.5*" SortMemberPath="Category"/>
+                    <DataGridTextColumn Header="🌐 الخدمة/الموقع" Binding="{Binding Service}" Width="3*" SortMemberPath="Service"/>
+                    <DataGridTextColumn Header="👤 اسم المستخدم/تسجيل الدخول" Binding="{Binding Username}" Width="3*" SortMemberPath="Username"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -262,26 +263,26 @@
         <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="20,15" 
                 BorderBrush="#E1E5E9" BorderThickness="1" Margin="0,0,0,15">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="➕ Add New" 
+                <Button Content="➕ إضافة جديد" 
                         Style="{StaticResource AddButtonStyle}"
                         Command="{Binding AddEntryCommand}" 
                         MinWidth="110" Margin="8,0"/>
-                <Button Content="✏️ Edit" 
+                <Button Content="✏️ تعديل" 
                         Style="{StaticResource EditButtonStyle}"
                         Command="{Binding EditEntryCommand}" 
                         CommandParameter="{Binding SelectedItem, ElementName=PasswordDataGrid}" 
                         MinWidth="100" Margin="8,0"/>
-                <Button Content="🔑 Copy Password" 
+                <Button Content="🔑 نسخ كلمة المرور" 
                         Style="{StaticResource CopyButtonStyle}"
                         Command="{Binding CopyPasswordCommand}" 
                         CommandParameter="{Binding SelectedItem, ElementName=PasswordDataGrid}" 
                         MinWidth="140" Margin="8,0"/>
-                <Button Content="🗑️ Delete" 
+                <Button Content="🗑️ حذف" 
                         Style="{StaticResource DeleteButtonStyle}"
                         Command="{Binding DeleteEntryCommand}" 
                         CommandParameter="{Binding SelectedItem, ElementName=PasswordDataGrid}" 
                         MinWidth="100" Margin="8,0"/>
-                <Button Content="🔒 Lock Vault" 
+                <Button Content="🔒 قفل الخزنة" 
                         Style="{StaticResource LockButtonStyle}"
                         Command="{Binding LockVaultCommand}" 
                         MinWidth="110" Margin="25,0,8,0"/>
@@ -289,18 +290,18 @@
         </Border>
 
         <!-- Browser Sync Section -->
-        <GroupBox Header="🌐 Browser Password File Sync" Grid.Row="3" 
+        <GroupBox Header="🌐 مزامنة ملفات كلمات مرور المتصفح" Grid.Row="3" 
                   Style="{StaticResource ModernGroupBoxStyle}">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="⬆️ Backup Browser Files"
+                <Button Content="⬆️ نسخ احتياطي لملفات المتصفح"
                         Style="{StaticResource ModernButtonStyle}"
                         Command="{Binding BackupBrowserFilesCommand}"
-                        ToolTip="Backs up browser password storage files (requires browsers closed)."
+                        ToolTip="نسخ احتياطي لملفات تخزين كلمات مرور المتصفح (يتطلب إغلاق المتصفحات)."
                         MinWidth="180" Margin="8,0"/>
-                <Button Content="⬇️ Restore Browser Files"
+                <Button Content="⬇️ استعادة ملفات المتصفح"
                         Style="{StaticResource ModernButtonStyle}"
                         Command="{Binding RestoreBrowserFilesCommand}"
-                        ToolTip="Restores browser password storage files from backup (requires browsers closed)."
+                        ToolTip="استعادة ملفات تخزين كلمات مرور المتصفح من النسخة الاحتياطية (يتطلب إغلاق المتصفحات)."
                         MinWidth="180" Margin="8,0"/>
             </StackPanel>
         </GroupBox>
