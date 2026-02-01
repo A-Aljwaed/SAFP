@@ -58,7 +58,7 @@ namespace SAFP.Wpf
              // This is a UI concern, handled here for simplicity.
              // Ideally, use an attached property or behavior for better MVVM.
              // Consider security implications of showing password in MessageBox.
-             MessageBox.Show($"Password: {vm.CurrentPassword}", "Password Reveal", MessageBoxButton.OK);
+             MessageBox.Show($"كلمة المرور: {vm.CurrentPassword}", "إظهار كلمة المرور", MessageBoxButton.OK);
              // We don't actually change the PasswordBox display here.
         }
     }
@@ -87,8 +87,8 @@ namespace SAFP.Wpf
 
         // Data for UI Binding
         public PasswordEntry Entry => _entry;
-        public string WindowTitle => _isNewEntry ? "Add New Entry" : "Edit Entry";
-        public List<string> Categories { get; } = new List<string> { "Website", "Application", "Email", "Network", "SSH Key", "Database", "Other" };
+        public string WindowTitle => _isNewEntry ? "إضافة إدخال جديد" : "تعديل الإدخال";
+        public List<string> Categories { get; } = new List<string> { "موقع ويب", "تطبيق", "بريد إلكتروني", "شبكة", "مفتاح SSH", "قاعدة بيانات", "أخرى" };
         public List<int> PasswordLengths { get; } = Enumerable.Range(8, 128 - 8 + 1).ToList(); // 8 to 128
 
         // *** ADDED PUBLIC PROPERTY ***
@@ -175,7 +175,7 @@ namespace SAFP.Wpf
                 Entry.Password = CurrentPassword;
 
                 CopyButtonVisibility = Visibility.Visible; // Show copy button
-                StatusMessage = "Password generated. You may need to click Show/Hide or Copy to see it.";
+                StatusMessage = "تم توليد كلمة المرور. قد تحتاج إلى النقر على عرض/إخفاء أو نسخ لرؤيتها.";
 
                 // Trigger PropertyChanged for CurrentPassword to ensure any potential bindings update
                 OnPropertyChanged(nameof(CurrentPassword));
@@ -185,7 +185,7 @@ namespace SAFP.Wpf
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error generating password: {ex.Message}";
+                StatusMessage = $"خطأ في توليد كلمة المرور: {ex.Message}";
             }
         }
 
@@ -195,23 +195,23 @@ namespace SAFP.Wpf
              try
              {
                  Clipboard.SetText(CurrentPassword);
-                 StatusMessage = "Generated password copied to clipboard.";
+                 StatusMessage = "تم نسخ كلمة المرور المُولَّدة إلى الحافظة.";
              }
              catch (Exception ex)
              {
-                  StatusMessage = $"Error copying password: {ex.Message}";
+                  StatusMessage = $"خطأ في نسخ كلمة المرور: {ex.Message}";
              }
         }
 
         private async Task SaveAsync()
         {
             if (!CanSave(null)) {
-                StatusMessage = "Please fill in Service and Username.";
+                StatusMessage = "يرجى ملء الخدمة واسم المستخدم.";
                 return;
             }
 
             IsBusy = true;
-            StatusMessage = "Saving...";
+            StatusMessage = "جارٍ الحفظ...";
 
             // Ensure the Entry object has the latest password from the UI (via CurrentPassword property)
             Entry.Password = CurrentPassword;
@@ -234,20 +234,20 @@ namespace SAFP.Wpf
                 {
                     if (string.IsNullOrEmpty(Entry.Id) || !allData.ContainsKey(Entry.Id))
                     {
-                        throw new InvalidOperationException("Cannot save entry: Original ID is missing or invalid.");
+                        throw new InvalidOperationException("لا يمكن حفظ الإدخال: المعرف الأصلي مفقود أو غير صالح.");
                     }
                     allData[Entry.Id] = Entry; // Update existing entry
                 }
 
                 // Save the entire updated dictionary
                 await _vaultLogic.SaveDataAsync(allData, _masterPassword);
-                StatusMessage = "Entry saved successfully.";
+                StatusMessage = "تم حفظ الإدخال بنجاح.";
                 RequestClose?.Invoke(this, true); // Close dialog, signal success
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error saving entry: {ex.Message}";
-                MessageBox.Show($"Failed to save entry: {ex.Message}", "Save Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusMessage = $"خطأ في حفظ الإدخال: {ex.Message}";
+                MessageBox.Show($"فشل حفظ الإدخال: {ex.Message}", "خطأ في الحفظ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
