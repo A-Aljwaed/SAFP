@@ -117,8 +117,34 @@ namespace SAFP.Wpf
             try
             {
                 Debug.WriteLine("[MainWindow] Performing exit cleanup...");
-                await _viewModel.BackupAndCleanupBrowserFilesOnExitAsync();
-                Debug.WriteLine("[MainWindow] Exit cleanup completed. Closing window programmatically.");
+                var (success, lockedFiles) = await _viewModel.BackupAndCleanupBrowserFilesOnExitAsync();
+                
+                if (!success && lockedFiles.Any())
+                {
+                    Debug.WriteLine($"[MainWindow] Cannot delete browser files - {lockedFiles.Count} files are locked.");
+                    
+                    // Show dialog to user about locked files
+                    var lockedFileNames = string.Join("\n", lockedFiles.Select(f => "• " + Path.GetFileName(f)));
+                    var result = MessageBox.Show(
+                        $"Cannot close SAFP - The following browser files are currently in use:\n\n{lockedFileNames}\n\n" +
+                        "Please close all web browsers and try again.\n\n" +
+                        "Do you want to retry closing the application?",
+                        "Browser Files Locked",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // Reset the flag so user can retry
+                        _viewModel.HasPerformedExitCleanup = false;
+                        // Retry the close operation
+                        Application.Current.Dispatcher.Invoke(() => this.Close());
+                    }
+                    // else: User chose not to retry, keep the window open
+                    return;
+                }
+                
+                Debug.WriteLine("[MainWindow] Exit cleanup completed successfully. Closing window programmatically.");
                 
                 // Close the window programmatically after cleanup completes
                 Application.Current.Dispatcher.Invoke(() => this.Close());
@@ -128,8 +154,8 @@ namespace SAFP.Wpf
                 Debug.WriteLine($"[MainWindow] Error during async exit cleanup: {ex}");
                 MessageBox.Show($"حدث خطأ أثناء إنهاء التطبيق: {ex.Message}", "خطأ في الإنهاء", MessageBoxButton.OK, MessageBoxImage.Warning);
                 
-                // Still try to close even if cleanup failed
-                Application.Current.Dispatcher.Invoke(() => this.Close());
+                // Reset the flag so user can retry
+                _viewModel.HasPerformedExitCleanup = false;
             }
         }
     }
@@ -485,14 +511,16 @@ namespace SAFP.Wpf
         /// <summary>
         /// Backs up browser files silently before exit, then securely deletes them.
         /// This is called automatically on application exit without user interaction.
+        /// Returns true if cleanup succeeded, false if files are locked and user should be prompted.
         /// </summary>
-        public async Task BackupAndCleanupBrowserFilesOnExitAsync()
+        public async Task<(bool Success, List<string> LockedFiles)> BackupAndCleanupBrowserFilesOnExitAsync()
         {
             // Mark that we're performing exit cleanup
             HasPerformedExitCleanup = true;
             
             // Use the ViewModel's master password which should still be available at this point
             string? masterPassword = _masterPassword;
+            var lockedFiles = new List<string>();
             
             if (_browserManager != null && !string.IsNullOrEmpty(masterPassword))
             {
@@ -508,16 +536,31 @@ namespace SAFP.Wpf
                     {
                         Debug.WriteLine("[MainViewModel] Browser backup successful. Proceeding with secure deletion.");
                         
-                        // Then securely delete browser files for security
+                        // Then securely delete browser files for security - require immediate deletion
                         Debug.WriteLine("[MainViewModel] Securely deleting browser files on exit...");
-                        var (deleteSuccess, deleteMessages) = await _browserManager.SecureDeleteAllBrowserFilesAsync();
+                        var (deleteSuccess, deleteMessages, deletionLockedFiles) = await _browserManager.SecureDeleteAllBrowserFilesAsync(requireImmediateDeletion: true);
                         Debug.WriteLine($"[MainViewModel] Browser file deletion completed. Success: {deleteSuccess}");
+                        
+                        if (!deleteSuccess)
+                        {
+                            lockedFiles = deletionLockedFiles;
+                            Debug.WriteLine($"[MainViewModel] Some files are locked: {string.Join(", ", lockedFiles.Select(Path.GetFileName))}");
+                            // Don't clear sensitive data yet - we'll need it if user retries
+                            return (false, lockedFiles);
+                        }
                     }
                     else
                     {
                         Debug.WriteLine("[MainViewModel] Browser backup failed or incomplete. Skipping deletion to preserve original files: " + string.Join("; ", backupMessages));
                         // Don't delete files if backup failed - preserve the originals
                     }
+                }
+                catch (IOException ex) when (ex.Message.Contains("locked"))
+                {
+                    Debug.WriteLine($"[MainViewModel] Browser files are locked: {ex.Message}");
+                    // Extract locked file names if available from the exception
+                    // Don't clear sensitive data yet - we'll need it if user retries
+                    return (false, lockedFiles);
                 }
                 catch (Exception ex)
                 {
@@ -539,6 +582,8 @@ namespace SAFP.Wpf
             
             // Also clear the App's master password to prevent duplicate backup in App.OnExit
             ((App)Application.Current).MasterPassword = null;
+            
+            return (true, lockedFiles);
         }
 
         // Helper to refresh the ObservableCollection from the source dictionary and re-sort
