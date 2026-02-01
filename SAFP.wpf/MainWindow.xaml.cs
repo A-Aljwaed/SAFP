@@ -181,7 +181,7 @@ namespace SAFP.Wpf
         private Dictionary<string, PasswordEntry> _passwordData;
         
         // Flag to track if exit cleanup has been performed
-        public bool HasPerformedExitCleanup { get; private set; } = false;
+        public bool HasPerformedExitCleanup { get; internal set; } = false;
 
         // *** WICHTIG: Initialisiere die Collection hier ***
         private ObservableCollection<PasswordEntry> _passwordEntries = new ObservableCollection<PasswordEntry>();
