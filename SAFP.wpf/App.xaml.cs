@@ -1,21 +1,22 @@
 using SAFP.Core; // For PasswordEntry, PasswordManagerLogic, BrowserFileManager
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Diagnostics; // For Debug.WriteLine
+using System.Drawing; // For Icon (Windows Forms)
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms; // For NotifyIcon
 using System.Windows.Threading; // For DispatcherUnhandledExceptionEventArgs
+using Microsoft.Win32; // For SystemEvents
 
 namespace SAFP.Wpf
 {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         public string? MasterPassword { get; set; } = null;
         public string VaultFilePath { get; private set; } = Path.Combine(
@@ -24,6 +25,12 @@ namespace SAFP.Wpf
 
         private PasswordManagerLogic? _logic;
         private BrowserFileManager? _browserManager;
+
+        // Background / tray support
+        private NotifyIcon? _trayIcon;
+        private Icon? _trayIconResource; // Owns the stream-loaded icon; needs explicit disposal
+        private DispatcherTimer? _periodicBackupTimer;
+        private const int BackupIntervalMinutes = 30;
 
         private async void Application_Startup(object sender, StartupEventArgs e)
         {
@@ -98,7 +105,7 @@ namespace SAFP.Wpf
                         if (backupSuccess)
                         {
                             Debug.WriteLine("[App] Automatic browser backup completed successfully.");
-                            MessageBox.Show("Welcome to SAFP!\n\n" +
+                            System.Windows.MessageBox.Show("Welcome to SAFP!\n\n" +
                                           "Your browser passwords have been automatically backed up and secured. " +
                                           "The original files have been securely deleted to prevent unauthorized access.\n\n" +
                                           "Browser passwords will be restored when SAFP is running and " +
@@ -109,7 +116,7 @@ namespace SAFP.Wpf
                         else
                         {
                             Debug.WriteLine("[App] Automatic browser backup failed.");
-                            MessageBox.Show("Warning: Could not automatically backup browser passwords:\n\n" +
+                            System.Windows.MessageBox.Show("Warning: Could not automatically backup browser passwords:\n\n" +
                                           string.Join("\n", backupMessages), 
                                           "Browser Backup Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                         }
@@ -127,7 +134,7 @@ namespace SAFP.Wpf
                         else
                         {
                             Debug.WriteLine($"[App] Browser file restore failed: {string.Join("; ", restoreMessages)}");
-                            MessageBox.Show("Warning: Could not restore browser passwords:\n\n" +
+                            System.Windows.MessageBox.Show("Warning: Could not restore browser passwords:\n\n" +
                                           string.Join("\n", restoreMessages), 
                                           "Browser Restore Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                         }
@@ -156,35 +163,246 @@ namespace SAFP.Wpf
             }
             else { Debug.WriteLine("[App] ERROR: Reached end of startup unexpectedly."); ShowFatalError("Application startup failed due to an unexpected state after login/setup.", true); return; }
 
+            // 7. Initialize system tray icon and background services
+            InitializeTrayIcon();
+            StartPeriodicBackupTimer();
+            SystemEvents.SessionEnding += SystemEvents_SessionEnding;
+
             Debug.WriteLine("[App] Application_Startup finished successfully.");
         }
 
-        // Global Exception Handler for UI Thread
+        // -------------------------------------------------------------------------
+        // System Tray Icon
+        // -------------------------------------------------------------------------
+
+        private void InitializeTrayIcon()
+        {
+            // Try to load the application icon from the embedded resource.
+            // Keep a reference in _trayIconResource so we can dispose it on exit.
+            // If loading fails, fall back to a copy of the system shield icon
+            // (we copy it so we own the handle and can safely dispose it later).
+            try
+            {
+                var streamInfo = GetResourceStream(new Uri("pack://application:,,,/app.ico"));
+                if (streamInfo?.Stream != null)
+                    _trayIconResource = new Icon(streamInfo.Stream);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] Could not load tray icon: {ex.Message}");
+            }
+
+            if (_trayIconResource == null)
+                _trayIconResource = new Icon(SystemIcons.Shield, SystemIcons.Shield.Size);
+
+            var contextMenu = new ContextMenuStrip();
+            contextMenu.Items.Add("🔐 Open SAFP", null, (s, e) => Dispatcher.Invoke(ShowMainWindow));
+            contextMenu.Items.Add(new ToolStripSeparator());
+            contextMenu.Items.Add("💾 Backup Browser Passwords Now", null, async (s, e) => await TrayBackupNowAsync());
+            contextMenu.Items.Add(new ToolStripSeparator());
+            contextMenu.Items.Add("❌ Exit SAFP", null, async (s, e) => await TrayExitAsync());
+
+            _trayIcon = new NotifyIcon
+            {
+                Icon = _trayIconResource,
+                Text = "SAFP - Password Manager",
+                ContextMenuStrip = contextMenu,
+                Visible = true
+            };
+            _trayIcon.DoubleClick += (s, e) => Dispatcher.Invoke(ShowMainWindow);
+
+            Debug.WriteLine("[App] System tray icon initialized.");
+        }
+
+        /// <summary>Shows or restores the main window from the tray.</summary>
+        internal void ShowMainWindow()
+        {
+            if (MainWindow != null)
+            {
+                if (!MainWindow.IsVisible)
+                    MainWindow.Show();
+                MainWindow.WindowState = WindowState.Normal;
+                MainWindow.Activate();
+            }
+        }
+
+        /// <summary>Shows a balloon notification from the tray icon.</summary>
+        internal void ShowTrayBalloon(string title, string message, ToolTipIcon icon = ToolTipIcon.Info)
+        {
+            _trayIcon?.ShowBalloonTip(3000, title, message, icon);
+        }
+
+        private async Task TrayBackupNowAsync()
+        {
+            if (_browserManager == null || string.IsNullOrEmpty(MasterPassword))
+            {
+                ShowTrayBalloon("SAFP", "Not logged in – please open SAFP first.", ToolTipIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                Debug.WriteLine("[App] Tray-initiated browser backup starting...");
+                var (success, messages) = await _browserManager.BackupBrowserFilesAsync(MasterPassword);
+                string msg = messages.FirstOrDefault() ?? (success ? "Backup successful." : "Backup failed.");
+                Debug.WriteLine($"[App] Tray backup: {success}. {string.Join("; ", messages)}");
+                ShowTrayBalloon("SAFP Backup", msg, success ? ToolTipIcon.Info : ToolTipIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] Tray backup error: {ex.Message}");
+                ShowTrayBalloon("SAFP Backup Error", ex.Message, ToolTipIcon.Error);
+            }
+        }
+
+        private async Task TrayExitAsync()
+        {
+            var result = System.Windows.MessageBox.Show(
+                "Exit SAFP?\n\nBrowser password files will be backed up and secured before exit.",
+                "Exit SAFP",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            // Allow the main window to close (don't minimize to tray)
+            (MainWindow as MainWindow)?.AllowClose();
+
+            // Perform backup + deletion, then shut down
+            await PerformExitCleanupAsync(showLockedFileInfo: true);
+            Current.Shutdown();
+        }
+
+        // -------------------------------------------------------------------------
+        // Periodic Backup Timer
+        // -------------------------------------------------------------------------
+
+        private void StartPeriodicBackupTimer()
+        {
+            _periodicBackupTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMinutes(BackupIntervalMinutes)
+            };
+            _periodicBackupTimer.Tick += async (s, e) => await PeriodicBackupTickAsync();
+            _periodicBackupTimer.Start();
+            Debug.WriteLine($"[App] Periodic backup timer started (interval: {BackupIntervalMinutes} min).");
+        }
+
+        private async Task PeriodicBackupTickAsync()
+        {
+            if (_browserManager == null || string.IsNullOrEmpty(MasterPassword))
+                return;
+
+            try
+            {
+                Debug.WriteLine("[App] Periodic browser backup starting...");
+                var (success, messages) = await _browserManager.BackupBrowserFilesAsync(MasterPassword);
+                Debug.WriteLine($"[App] Periodic backup: {success}. {string.Join("; ", messages)}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] Periodic backup error: {ex.Message}");
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // Session Ending (PC Shutdown / Logoff)
+        // -------------------------------------------------------------------------
+
+        private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
+        {
+            Debug.WriteLine($"[App] Session ending. Reason: {e.Reason}. Performing emergency backup...");
+
+            if (_browserManager == null || string.IsNullOrEmpty(MasterPassword))
+                return;
+
+            try
+            {
+                // Run on a background thread to avoid deadlocking the UI thread
+                // (GetAwaiter().GetResult() on UI thread would block its own continuations).
+                Task.Run(() => _browserManager!.BackupBrowserFilesAsync(MasterPassword!))
+                    .GetAwaiter().GetResult();
+                Debug.WriteLine("[App] Emergency backup on session end completed.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] Emergency backup error on session end: {ex.Message}");
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // Shared Exit-Cleanup Helper
+        // -------------------------------------------------------------------------
+
+        /// <summary>
+        /// Backs up browser files and (where possible) securely deletes originals.
+        /// Clears <see cref="MasterPassword"/> afterwards to prevent duplicate runs.
+        /// </summary>
+        private async Task PerformExitCleanupAsync(bool showLockedFileInfo = false)
+        {
+            if (_browserManager == null || string.IsNullOrEmpty(MasterPassword))
+                return;
+
+            try
+            {
+                Debug.WriteLine("[App] PerformExitCleanupAsync: backing up browser files...");
+                var (backupSuccess, backupMessages) = await _browserManager.BackupBrowserFilesAsync(MasterPassword);
+                Debug.WriteLine($"[App] Exit backup: {backupSuccess}. {string.Join("; ", backupMessages)}");
+
+                if (backupSuccess)
+                {
+                    // Allow reboot-scheduled deletion as fallback (browser may still be running)
+                    var (deleteSuccess, deleteMessages, lockedFiles) =
+                        await _browserManager.SecureDeleteAllBrowserFilesAsync(requireImmediateDeletion: false);
+                    Debug.WriteLine($"[App] Exit deletion: {deleteSuccess}. {string.Join("; ", deleteMessages)}");
+
+                    if (!deleteSuccess && lockedFiles.Any() && showLockedFileInfo)
+                    {
+                        var names = string.Join("\n", lockedFiles.Select(f => "• " + Path.GetFileName(f)));
+                        System.Windows.MessageBox.Show(
+                            $"The following browser files are currently in use by a running browser.\n" +
+                            $"They will be securely removed the next time the computer restarts:\n\n{names}",
+                            "Browser Files Locked – Will Be Removed on Restart",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("[App] Backup incomplete – skipping deletion to preserve original files.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[App] Error during exit cleanup: {ex.Message}");
+            }
+            finally
+            {
+                // Clear sensitive data so OnExit does not run a duplicate backup
+                MasterPassword = null;
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // Global Exception Handler
+        // -------------------------------------------------------------------------
+
         private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             Debug.WriteLine($"[App] !!!!! DispatcherUnhandledException caught !!!!!");
             Debug.WriteLine($"[App] Exception: {e.Exception}");
 
-            // Show a message to the user
             string errorMessage = $"An unhandled error occurred: {e.Exception.Message}";
-            MessageBox.Show(errorMessage, "Unhandled Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            System.Windows.MessageBox.Show(errorMessage, "Unhandled Error", MessageBoxButton.OK, MessageBoxImage.Error);
 
-            // Prevent default WPF crash handling
             e.Handled = true;
-
-            // Optionally, decide whether to shut down or try to continue
-            // For safety, shutting down is often best unless you can recover gracefully.
-            // ShowFatalError("An unhandled error occurred on the UI thread.", true);
-            // OR attempt to close gracefully:
-            // Current.Shutdown();
         }
-
 
         // Helper to show fatal error and optionally shutdown
         private void ShowFatalError(string message, bool shutdown = false)
         {
             Debug.WriteLine($"[App] FATAL ERROR: {message}");
-            MessageBox.Show($"{message}\n{(shutdown ? "Application will exit." : "")}", "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            System.Windows.MessageBox.Show($"{message}\n{(shutdown ? "Application will exit." : "")}", "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
             if (shutdown)
             {
                 if (Dispatcher.CheckAccess()) { Current.Shutdown(1); }
@@ -192,49 +410,50 @@ namespace SAFP.Wpf
             }
         }
 
-        // Override OnExit or handle MainWindow closing differently if needed with OnExplicitShutdown
+        // -------------------------------------------------------------------------
+        // Application Exit
+        // -------------------------------------------------------------------------
+
         protected override async void OnExit(ExitEventArgs e)
         {
-            Debug.WriteLine($"[App] Application exiting with code: {e.ApplicationExitCode}");
-            
-            // Backup and securely delete browser files when app closes (fallback if MainWindow cleanup didn't execute)
+            Debug.WriteLine($"[App] OnExit called (code: {e.ApplicationExitCode}).");
+
+            // Unsubscribe from OS events
+            SystemEvents.SessionEnding -= SystemEvents_SessionEnding;
+
+            // Stop the periodic backup timer
+            _periodicBackupTimer?.Stop();
+
+            // Final backup if the explicit exit path did not already clear MasterPassword
             if (_browserManager != null && !string.IsNullOrEmpty(MasterPassword))
             {
                 try
                 {
-                    // First, backup browser files to ensure they're up-to-date
-                    Debug.WriteLine("[App] Backing up browser files before exit (fallback path)...");
-                    var (backupSuccess, backupMessages) = await _browserManager.BackupBrowserFilesAsync(MasterPassword);
-                    Debug.WriteLine($"[App] Browser file backup completed. Success: {backupSuccess}");
-                    
-                    // Only proceed with deletion if backup was successful
+                    Debug.WriteLine("[App] OnExit: running fallback backup...");
+                    var (backupSuccess, _) = await _browserManager.BackupBrowserFilesAsync(MasterPassword);
                     if (backupSuccess)
-                    {
-                        Debug.WriteLine("[App] Browser backup successful. Messages: " + string.Join("; ", backupMessages));
-                        
-                        // Then securely delete browser files for security
-                        // Allow reboot deletion as fallback since this is app shutdown
-                        Debug.WriteLine("[App] Securely deleting browser files on exit...");
-                        var (deleteSuccess, deleteMessages, lockedFiles) = await _browserManager.SecureDeleteAllBrowserFilesAsync(requireImmediateDeletion: false);
-                        Debug.WriteLine($"[App] Browser file deletion completed. Success: {deleteSuccess}");
-                    }
-                    else
-                    {
-                        Debug.WriteLine("[App] Browser backup failed or incomplete. Skipping deletion to preserve original files: " + string.Join("; ", backupMessages));
-                        // Don't delete files if backup failed - preserve the originals
-                    }
+                        await _browserManager.SecureDeleteAllBrowserFilesAsync(requireImmediateDeletion: false);
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[App] Error during browser file backup/cleanup: {ex.Message}");
-                    // Don't delete files if an exception occurred
+                    Debug.WriteLine($"[App] OnExit backup error: {ex.Message}");
                 }
             }
             else
             {
-                Debug.WriteLine("[App] Skipping browser backup/cleanup - manager or password not available (likely already performed by MainWindow)");
+                Debug.WriteLine("[App] Skipping OnExit backup – already performed by explicit exit path.");
             }
-            
+
+            // Dispose tray icon and its associated icon resource
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
+            _trayIconResource?.Dispose();
+            _trayIconResource = null;
+
             base.OnExit(e);
         }
     }
