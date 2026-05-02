@@ -48,6 +48,8 @@ namespace SAFP.Wpf
                 _viewModel.RequestLock += (sender, args) =>
                 {
                     Debug.WriteLine("[MainWindow] RequestLock event received. Showing LoginWindow.");
+                    // Allow the window to actually close instead of hiding to tray
+                    AllowClose();
                     var loginWindow = new LoginWindow(((App)Application.Current).VaultFilePath, isInitialSetup: false);
                     Application.Current.MainWindow = loginWindow;
                     loginWindow.Show();
@@ -70,104 +72,34 @@ namespace SAFP.Wpf
             Debug.WriteLine("[MainWindow] Loaded event fired.");
         }
 
+        // When true (default), closing the window hides it to the system tray.
+        // Set to false before calling Close() when the vault is locked or the app is exiting.
+        private bool _minimizeToTray = true;
+
+        /// <summary>
+        /// Allows the window to close normally (used for lock-vault and tray-exit flows).
+        /// </summary>
+        public void AllowClose() => _minimizeToTray = false;
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            Debug.WriteLine($"[MainWindow] Window_Closing event triggered. CancelEventArgs.Cancel = {e.Cancel}");
-            if (e.Cancel) { Debug.WriteLine("[MainWindow] Closing already cancelled."); return; }
+            Debug.WriteLine($"[MainWindow] Window_Closing event triggered. MinimizeToTray={_minimizeToTray}");
 
-            try
+            if (_minimizeToTray)
             {
-                 if (!_viewModel.CanExitApplication())
-                 {
-                     Debug.WriteLine("[MainWindow] Exit cancelled by ViewModel. Setting e.Cancel = true.");
-                     e.Cancel = true;
-                 }
-                 else
-                 {
-                      Debug.WriteLine("[MainWindow] Exit allowed by ViewModel.");
-                      
-                      // Check if we already performed the cleanup to avoid duplicate execution
-                      if (!_viewModel.HasPerformedExitCleanup)
-                      {
-                          // Cancel the initial close event and perform async cleanup
-                          e.Cancel = true;
-                          Debug.WriteLine("[MainWindow] Cancelling close to perform async browser backup...");
-                          
-                          // Perform the async cleanup, then close the window programmatically
-                          _ = PerformExitCleanupAndClose();
-                      }
-                      else
-                      {
-                          Debug.WriteLine("[MainWindow] Exit cleanup already performed. Allowing window to close.");
-                          // Allow the window to close since cleanup is done
-                      }
-                 }
+                // Hide to tray instead of closing
+                e.Cancel = true;
+                this.Hide();
+                ((App)Application.Current).ShowTrayBalloon(
+                    "SAFP",
+                    "SAFP läuft weiterhin im Hintergrund.\nDoppelklicken Sie auf das Symbol, um es zu öffnen.",
+                    System.Windows.Forms.ToolTipIcon.Info);
+                Debug.WriteLine("[MainWindow] Window hidden to tray.");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.WriteLine($"[MainWindow] Error during Window_Closing: {ex}");
-                MessageBox.Show($"خطأ أثناء إغلاق النافذة: {ex.Message}", "خطأ في الإغلاق", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-             Debug.WriteLine($"[MainWindow] Window_Closing event finished. CancelEventArgs.Cancel = {e.Cancel}");
-        }
-
-        private bool _isClosing = false; // Prevent re-entrant Close() calls
-        
-        private async Task PerformExitCleanupAndClose()
-        {
-            if (_isClosing) return; // Already in progress
-            _isClosing = true;
-            
-            try
-            {
-                Debug.WriteLine("[MainWindow] Performing exit cleanup...");
-                var (success, lockedFiles) = await _viewModel.BackupAndCleanupBrowserFilesOnExitAsync();
-                
-                if (!success && lockedFiles.Any())
-                {
-                    Debug.WriteLine($"[MainWindow] Cannot delete browser files - {lockedFiles.Count} files are locked.");
-                    
-                    // Show dialog to user about locked files
-                    var lockedFileNames = string.Join("\n", lockedFiles.Select(f => "• " + Path.GetFileName(f)));
-                    var result = MessageBox.Show(
-                        $"Cannot close SAFP - The following browser files are currently in use:\n\n{lockedFileNames}\n\n" +
-                        "Please close all web browsers and try again.\n\n" +
-                        "Do you want to retry closing the application?",
-                        "Browser Files Locked",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning);
-                    
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        // Reset the flags so user can retry
-                        _viewModel.HasPerformedExitCleanup = false;
-                        _isClosing = false;
-                        // Retry the close operation
-                        this.Close();
-                    }
-                    else
-                    {
-                        // User chose not to retry, keep the window open
-                        _isClosing = false;
-                    }
-                    return;
-                }
-                
-                Debug.WriteLine("[MainWindow] Exit cleanup completed successfully. Shutting down application.");
-                
-                // Shutdown the application directly instead of calling Close() again
-                // This avoids re-triggering the Window_Closing event
-                Application.Current.Shutdown();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MainWindow] Error during async exit cleanup: {ex}");
-                MessageBox.Show($"حدث خطأ أثناء إنهاء التطبيق: {ex.Message}", "خطأ في الإنهاء", MessageBoxButton.OK, MessageBoxImage.Warning);
-                
-                // Reset the flags so user can retry
-                _viewModel.HasPerformedExitCleanup = false;
-                _isClosing = false;
+                // Normal close (lock-vault or explicit tray-exit) – nothing extra needed here.
+                Debug.WriteLine("[MainWindow] Window closing normally (lock or exit).");
             }
         }
     }
