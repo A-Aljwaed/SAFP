@@ -28,6 +28,7 @@ namespace SAFP.Wpf
 
         // Background / tray support
         private NotifyIcon? _trayIcon;
+        private Icon? _trayIconResource; // Owns the stream-loaded icon; needs explicit disposal
         private DispatcherTimer? _periodicBackupTimer;
         private const int BackupIntervalMinutes = 30;
 
@@ -176,18 +177,23 @@ namespace SAFP.Wpf
 
         private void InitializeTrayIcon()
         {
-            Icon? appIcon = null;
+            // Try to load the application icon from the embedded resource.
+            // Keep a reference in _trayIconResource so we can dispose it on exit.
+            // If loading fails, fall back to a copy of the system shield icon
+            // (we copy it so we own the handle and can safely dispose it later).
             try
             {
                 var streamInfo = GetResourceStream(new Uri("pack://application:,,,/app.ico"));
                 if (streamInfo?.Stream != null)
-                    appIcon = new Icon(streamInfo.Stream);
+                    _trayIconResource = new Icon(streamInfo.Stream);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[App] Could not load tray icon: {ex.Message}");
-                appIcon = SystemIcons.Shield;
             }
+
+            if (_trayIconResource == null)
+                _trayIconResource = new Icon(SystemIcons.Shield, SystemIcons.Shield.Size);
 
             var contextMenu = new ContextMenuStrip();
             contextMenu.Items.Add("🔐 Open SAFP", null, (s, e) => Dispatcher.Invoke(ShowMainWindow));
@@ -198,7 +204,7 @@ namespace SAFP.Wpf
 
             _trayIcon = new NotifyIcon
             {
-                Icon = appIcon ?? SystemIcons.Shield,
+                Icon = _trayIconResource,
                 Text = "SAFP - Password Manager",
                 ContextMenuStrip = contextMenu,
                 Visible = true
@@ -260,8 +266,7 @@ namespace SAFP.Wpf
             if (result != MessageBoxResult.Yes) return;
 
             // Allow the main window to close (don't minimize to tray)
-            if (MainWindow is MainWindow mw)
-                mw.AllowClose();
+            (MainWindow as MainWindow)?.AllowClose();
 
             // Perform backup + deletion, then shut down
             await PerformExitCleanupAsync(showLockedFileInfo: true);
@@ -313,8 +318,10 @@ namespace SAFP.Wpf
 
             try
             {
-                // Must run synchronously – the OS gives very little time on shutdown.
-                _browserManager.BackupBrowserFilesAsync(MasterPassword).GetAwaiter().GetResult();
+                // Run on a background thread to avoid deadlocking the UI thread
+                // (GetAwaiter().GetResult() on UI thread would block its own continuations).
+                Task.Run(() => _browserManager!.BackupBrowserFilesAsync(MasterPassword!))
+                    .GetAwaiter().GetResult();
                 Debug.WriteLine("[App] Emergency backup on session end completed.");
             }
             catch (Exception ex)
@@ -437,13 +444,15 @@ namespace SAFP.Wpf
                 Debug.WriteLine("[App] Skipping OnExit backup – already performed by explicit exit path.");
             }
 
-            // Dispose tray icon
+            // Dispose tray icon and its associated icon resource
             if (_trayIcon != null)
             {
                 _trayIcon.Visible = false;
                 _trayIcon.Dispose();
                 _trayIcon = null;
             }
+            _trayIconResource?.Dispose();
+            _trayIconResource = null;
 
             base.OnExit(e);
         }
