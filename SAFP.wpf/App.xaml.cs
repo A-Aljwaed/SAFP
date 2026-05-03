@@ -311,7 +311,7 @@ namespace SAFP.Wpf
 
         private void SystemEvents_SessionEnding(object sender, SessionEndingEventArgs e)
         {
-            Debug.WriteLine($"[App] Session ending. Reason: {e.Reason}. Performing emergency backup...");
+            Debug.WriteLine($"[App] Session ending. Reason: {e.Reason}. Performing emergency backup and secure delete...");
 
             if (_browserManager == null || string.IsNullOrEmpty(MasterPassword))
                 return;
@@ -320,13 +320,25 @@ namespace SAFP.Wpf
             {
                 // Run on a background thread to avoid deadlocking the UI thread
                 // (GetAwaiter().GetResult() on UI thread would block its own continuations).
-                Task.Run(() => _browserManager!.BackupBrowserFilesAsync(MasterPassword!))
-                    .GetAwaiter().GetResult();
-                Debug.WriteLine("[App] Emergency backup on session end completed.");
+                Task.Run(async () =>
+                {
+                    var (backupSuccess, _) = await _browserManager!.BackupBrowserFilesAsync(MasterPassword!);
+                    if (backupSuccess)
+                    {
+                        // Securely delete originals so passwords are gone while the PC is off.
+                        // They will be restored from the backup the next time SAFP starts.
+                        await _browserManager!.SecureDeleteAllBrowserFilesAsync(requireImmediateDeletion: false);
+                    }
+                    else
+                    {
+                        Debug.WriteLine("[App] Session-end backup incomplete – skipping deletion to preserve original files.");
+                    }
+                }).GetAwaiter().GetResult();
+                Debug.WriteLine("[App] Emergency backup and secure delete on session end completed.");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[App] Emergency backup error on session end: {ex.Message}");
+                Debug.WriteLine($"[App] Emergency backup/delete error on session end: {ex.Message}");
             }
         }
 
